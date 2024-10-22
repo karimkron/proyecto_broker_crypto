@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { FaArrowLeft } from "react-icons/fa";
 import axios from "axios";
+import { useNavigate } from "react-router-dom";
 import "./TradeModal.css";
 
 const TradeModal = ({ cryptoData, tradeType, onClose }) => {
@@ -11,6 +12,7 @@ const TradeModal = ({ cryptoData, tradeType, onClose }) => {
   const [error, setError] = useState("");
   const [profitPercentages, setProfitPercentages] = useState({});
   const [estimatedProfit, setEstimatedProfit] = useState(0);
+  const navigate = useNavigate();
 
   useEffect(() => {
     const fetchUserData = async () => {
@@ -47,6 +49,10 @@ const TradeModal = ({ cryptoData, tradeType, onClose }) => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (parseFloat(amount) > userBalance) {
+      setError("Saldo insuficiente");
+      return;
+    }
     try {
       const token = localStorage.getItem("token");
       const response = await axios.post(
@@ -63,13 +69,14 @@ const TradeModal = ({ cryptoData, tradeType, onClose }) => {
       );
       console.log("Orden enviada:", response.data);
       onClose();
+      navigate("/orders");
     } catch (err) {
       setError(err.response?.data?.msg || "Error al procesar la orden");
     }
   };
 
   if (loading) return <div>Cargando...</div>;
-  if (error) return <div>{error}</div>;
+  if (error) return <div className="error-message">{error}</div>;
 
   return (
     <div className="trade-modal-overlay">
@@ -126,6 +133,9 @@ const TradeModal = ({ cryptoData, tradeType, onClose }) => {
               onChange={(e) => setAmount(e.target.value)}
               placeholder="Ingrese el monto"
               required
+              min="0.01"
+              step="0.01"
+              max={userBalance}
             />
           </div>
           <div className="form-group">

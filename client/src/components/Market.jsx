@@ -2,15 +2,12 @@ import React, { useState, useEffect } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import { FaWallet, FaExchangeAlt, FaHeadset } from "react-icons/fa";
-import TradeModal from "./TradeModal";
 import "./Market.css";
 
 const Market = () => {
   const [cryptocurrencies, setCryptocurrencies] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [selectedCrypto, setSelectedCrypto] = useState(null);
-  const [tradeType, setTradeType] = useState("");
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -39,12 +36,6 @@ const Market = () => {
 
   const handleCryptoSelect = (crypto) => {
     navigate(`/crypto/${crypto.id}`);
-  };
-
-  const handleTradeClick = (e, crypto, type) => {
-    e.stopPropagation();
-    setSelectedCrypto(crypto);
-    setTradeType(type);
   };
 
   if (loading) return <div className="loading">Cargando...</div>;
@@ -107,24 +98,9 @@ const Market = () => {
                 {crypto.price_change_percentage_24h.toFixed(2)}%
               </span>
             </div>
-            <div className="trade-buttons">
-              <button onClick={(e) => handleTradeClick(e, crypto, "buy")}>
-                Comprar
-              </button>
-              <button onClick={(e) => handleTradeClick(e, crypto, "sell")}>
-                Vender
-              </button>
-            </div>
           </div>
         ))}
       </div>
-      {selectedCrypto && (
-        <TradeModal
-          cryptoData={selectedCrypto}
-          tradeType={tradeType}
-          onClose={() => setSelectedCrypto(null)}
-        />
-      )}
     </div>
   );
 };

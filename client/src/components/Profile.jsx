@@ -2,6 +2,16 @@ import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import ChangePassword from "./ChangePassword";
 import KYCForm from "./KYCForm";
+import {
+  FaUser,
+  FaEnvelope,
+  FaCalendar,
+  FaLock,
+  FaIdCard,
+  FaSignOutAlt,
+  FaChartLine,
+} from "react-icons/fa";
+import "./Profile.css";
 
 const Profile = ({ setIsAuthenticated }) => {
   const [user, setUser] = useState(null);
@@ -58,29 +68,60 @@ const Profile = ({ setIsAuthenticated }) => {
     setShowChangePassword(false);
   };
 
-  if (loading) return <div>Cargando...</div>;
-  if (error) return <div>{error}</div>;
+  if (loading) return <div className="loading">Cargando...</div>;
+  if (error) return <div className="error">{error}</div>;
 
   return (
-    <div className="profile">
-      <h1>Perfil</h1>
+    <div className="profile-container">
+      <div className="profile-header">
+        <h1>Perfil del Trader</h1>
+        <button className="logout-button" onClick={handleLogout}>
+          <FaSignOutAlt /> Cerrar Sesión
+        </button>
+      </div>
       {user && (
-        <div>
-          <p>Nombre de usuario: {user.email.split("@")[0]}</p>
-          <p>Email: {user.email}</p>
-          <p>Cuenta creada: {new Date(user.date).toLocaleDateString()}</p>
-          <button onClick={handleChangePassword}>
-            {showChangePassword
-              ? "Cancelar cambio de contraseña"
-              : "Cambiar Contraseña"}
-          </button>
-          <button onClick={handleKYC}>
-            {showKYCForm ? "Cancelar KYC" : "Realizar KYC"}
-          </button>
-          <button onClick={handleLogout}>Cerrar Sesión</button>
-
-          {showChangePassword && <ChangePassword />}
-          {showKYCForm && <KYCForm />}
+        <div className="profile-content">
+          <div className="profile-info">
+            <div className="info-item">
+              <FaUser className="icon" />
+              <p>
+                <strong>Usuario:</strong> {user.email.split("@")[0]}
+              </p>
+            </div>
+            <div className="info-item">
+              <FaEnvelope className="icon" />
+              <p>
+                <strong>Email:</strong> {user.email}
+              </p>
+            </div>
+            <div className="info-item">
+              <FaCalendar className="icon" />
+              <p>
+                <strong>Cuenta creada:</strong>{" "}
+                {new Date(user.date).toLocaleDateString()}
+              </p>
+            </div>
+            <div className="info-item">
+              <FaChartLine className="icon" />
+              <p>
+                <strong>Nivel de Trader:</strong> Profesional
+              </p>
+            </div>
+          </div>
+          <div className="profile-actions">
+            <button className="action-button" onClick={handleChangePassword}>
+              <FaLock className="icon" />
+              {showChangePassword ? "Cancelar" : "Cambiar Contraseña"}
+            </button>
+            <button className="action-button" onClick={handleKYC}>
+              <FaIdCard className="icon" />
+              {showKYCForm ? "Cancelar KYC" : "Realizar KYC"}
+            </button>
+          </div>
+          <div className="profile-forms">
+            {showChangePassword && <ChangePassword />}
+            {showKYCForm && <KYCForm />}
+          </div>
         </div>
       )}
     </div>

@@ -30,9 +30,20 @@ const orderSchema = new mongoose.Schema({
     enum: ["en progreso", "completada", "cancelada"],
     default: "en progreso",
   },
+  progress: {
+    type: Number,
+    default: 0,
+  },
+  currentProfit: {
+    type: Number,
+    default: 0,
+  },
   createdAt: {
     type: Date,
     default: Date.now,
+  },
+  completedAt: {
+    type: Date,
   },
 });
 

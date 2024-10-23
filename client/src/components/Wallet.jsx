@@ -18,7 +18,7 @@ import {
   FaMinus,
   FaExclamationTriangle,
 } from "react-icons/fa";
-import "./Wallet.css";
+import "../styles/pages/wallet.css";
 
 const CACHE_DURATION = 5 * 60 * 1000;
 

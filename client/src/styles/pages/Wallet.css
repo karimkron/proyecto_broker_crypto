@@ -11,30 +11,35 @@
   --text-primary: #ffffff;
   --text-secondary: rgba(255, 255, 255, 0.7);
   --text-tertiary: rgba(255, 255, 255, 0.5);
-  --bitcoin-color: #f7931a;
-  --ethereum-color: #627eea;
-  --usdt-color: #26a17b;
-  --euro-color: #2962ff;
+  --bitcoin-color: #ffa500;
+  --ethereum-color: #9b59b6;
+  --usdt-color: #2ecc71;
+  --euro-color: #3498db;
 }
 
 /* Base Styles */
 .wallet-container {
-  min-height: 100vh;
-  padding: 2rem;
-  background: var(--primary-gradient);
-  color: var(--text-primary);
+  height: 100%;
+  width: 100%;
+  padding: 1rem;
+  color: #ffffff;
   font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
     Oxygen, Ubuntu, Cantarell, sans-serif;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  overflow-y: auto;
 }
 
 /* Header Styles */
 .wallet-header {
-  margin-bottom: 2rem;
-  backdrop-filter: blur(10px);
+  margin-bottom: 1rem;
   border-radius: 20px;
   padding: 1.5rem;
   background: var(--glass-bg);
   border: 1px solid var(--glass-border);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
 }
 
 .header-content {
@@ -85,38 +90,53 @@
   padding: 2rem;
   border-radius: 24px;
   background: var(--secondary-gradient);
-  overflow: hidden;
-  margin-bottom: 2rem;
+  overflow: visible;
+  margin-bottom: 1.5rem;
   box-shadow: var(--card-shadow);
   border: 1px solid var(--glass-border);
+  min-height: 300px;
 }
 
 .balance-card-content {
   position: relative;
   z-index: 1;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
 }
 
 .balance-info {
-  margin-bottom: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.balance-info h2 {
+  color: #ffffff;
+  font-size: var(--font-size-2xl);
+  margin: 0;
 }
 
 .total-amount {
-  font-size: 3rem;
+  font-size: 3.5rem;
   font-weight: 700;
-  margin: 1rem 0;
+  margin: 0;
   display: flex;
   align-items: center;
   gap: 0.5rem;
+  color: #ffffff;
+  line-height: 1.2;
 }
 
 .currency-symbol {
-  font-size: 2rem;
+  font-size: 2.5rem;
   opacity: 0.8;
 }
 
 .usdt-equivalent {
   font-size: 1.2rem;
-  color: var(--text-secondary);
+  color: rgb(255, 255, 255, 0.7);
+  margin-top: 0.5rem;
 }
 
 .card-background-effect {
@@ -127,22 +147,45 @@
   bottom: 0;
   background: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%239C92AC' fill-opacity='0.05'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
   opacity: 0.1;
+  border-radius: 24px;
+}
+
+.balance-chart {
+  margin-top: auto;
+}
+
+.trend-indicator {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: var(--border-radius-lg);
+  font-size: 0.9rem;
+  color: var(--color-success);
+}
+
+.trend-indicator.positive {
+  color: var(--color-success);
 }
 
 /* Quick Actions */
 .quick-actions {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  display: flex;
+  justify-content: space-between;
   gap: 1rem;
-  margin-bottom: 2rem;
+  margin-bottom: 1.5rem;
+  width: 100%;
 }
 
 .action-button {
+  flex: 1;
+  min-width: 100px;
   background: var(--glass-bg);
   border: 1px solid var(--glass-border);
   border-radius: 16px;
-  padding: 1.5rem;
-  color: var(--text-primary);
+  padding: 1.5rem 1rem;
+  color: #ffffff;
   cursor: pointer;
   transition: all 0.3s ease;
   display: flex;
@@ -172,6 +215,7 @@
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
   gap: 1.5rem;
+  width: 100%;
 }
 
 .asset-card {
@@ -181,6 +225,8 @@
   padding: 1.5rem;
   transition: all 0.3s ease;
   cursor: pointer;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
 }
 
 .asset-card:hover {
@@ -230,10 +276,11 @@
   font-size: 1.5rem;
   font-weight: 700;
   display: block;
+  color: #ffffff;
 }
 
 .amount-label {
-  color: var(--text-secondary);
+  color: rgb(255, 255, 255, 0.7);
   font-size: 0.9rem;
 }
 
@@ -251,10 +298,11 @@
   font-size: 1.1rem;
   font-weight: 600;
   display: block;
+  color: #ffffff;
 }
 
 .detail-label {
-  color: var(--text-secondary);
+  color: rgb(255, 255, 255, 0.7);
   font-size: 0.8rem;
 }
 
@@ -266,9 +314,10 @@
 .action-link {
   background: none;
   border: none;
-  color: var(--text-primary);
+  color: #ffffff;
   display: flex;
   align-items: center;
+  justify-content: flex-end;
   gap: 0.5rem;
   font-size: 0.9rem;
   cursor: pointer;
@@ -292,38 +341,6 @@
 }
 
 /* Responsive Design */
-@media screen and (max-width: 1200px) {
-  .assets-grid {
-    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-  }
-}
-
-@media screen and (max-width: 768px) {
-  .wallet-container {
-    padding: 1rem;
-  }
-
-  .title-section h1 {
-    font-size: 2rem;
-  }
-
-  .balance-card {
-    padding: 1.5rem;
-  }
-
-  .total-amount {
-    font-size: 2.5rem;
-  }
-
-  .quick-actions {
-    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
-  }
-
-  .action-button {
-    padding: 1rem;
-  }
-}
-
 @media screen and (max-width: 480px) {
   .wallet-header {
     padding: 1rem;
@@ -335,6 +352,7 @@
 
   .assets-grid {
     grid-template-columns: 1fr;
+    gap: 1rem;
   }
 
   .asset-card {
@@ -346,7 +364,20 @@
   }
 
   .quick-actions {
-    grid-template-columns: 1fr;
+    flex-wrap: nowrap;
+    gap: 0.5rem;
+  }
+
+  .action-button {
+    padding: 1rem 0.5rem;
+  }
+
+  .action-button .action-icon {
+    font-size: 1.2rem;
+  }
+
+  .button-content span {
+    font-size: 0.8rem;
   }
 }
 

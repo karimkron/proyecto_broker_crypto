@@ -1,0 +1,183 @@
+/* Estilos para el contenedor principal de la aplicación */
+.app-container {
+  padding-bottom: calc(var(--nav-height) + env(safe-area-inset-bottom, 16px));
+  min-height: 100vh;
+  overflow-y: auto;
+}
+
+/* Barra de navegación */
+.bottom-nav {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: var(--nav-height);
+  display: flex;
+  justify-content: space-evenly;
+  align-items: center;
+  background: var(--glass-background);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border-top: 1px solid var(--glass-border);
+  padding: 0 max(env(safe-area-inset-left), 16px)
+    env(safe-area-inset-bottom, 16px) max(env(safe-area-inset-right), 16px);
+  z-index: var(--z-index-nav);
+  box-shadow: var(--shadow-lg);
+}
+
+/* Enlaces de navegación */
+.nav-link {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  flex: 1;
+  height: 100%;
+  min-width: 60px;
+  max-width: 80px;
+  text-decoration: none;
+  color: var(--color-text-secondary);
+  transition: all var(--transition-normal);
+  padding: 8px 4px;
+  gap: 4px;
+}
+
+/* Iconos */
+.nav-link svg {
+  font-size: clamp(20px, 5vw, 24px);
+  transition: all var(--transition-normal);
+  margin-bottom: 2px;
+}
+
+/* Texto */
+.nav-link span {
+  font-size: clamp(10px, 3vw, 12px);
+  font-weight: 500;
+  transition: all var(--transition-normal);
+  opacity: 0.7;
+  text-align: center;
+  white-space: nowrap;
+}
+
+/* Indicador de estado activo */
+.nav-link::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%) scale(0);
+  width: 4px;
+  height: 4px;
+  background: var(--color-primary);
+  border-radius: 50%;
+  transition: transform var(--transition-normal);
+}
+
+/* Estado activo */
+.nav-link.active {
+  color: var(--color-primary);
+}
+
+.nav-link.active::before {
+  transform: translateX(-50%) scale(1);
+}
+
+.nav-link.active svg {
+  transform: translateY(-2px) scale(1.1);
+}
+
+.nav-link.active span {
+  opacity: 1;
+  transform: translateY(2px);
+}
+
+/* Efectos hover en dispositivos que lo soportan */
+@media (hover: hover) {
+  .nav-link:hover {
+    color: var(--color-primary);
+    background: rgba(255, 255, 255, 0.05);
+  }
+
+  .nav-link:hover svg {
+    transform: translateY(-2px);
+  }
+
+  .nav-link:hover span {
+    opacity: 1;
+  }
+}
+
+/* Efecto al presionar */
+.nav-link:active {
+  transform: scale(0.95);
+}
+
+/* Estilos especiales para el enlace de admin */
+.nav-link.admin {
+  position: relative;
+}
+
+.nav-link.admin::after {
+  content: "";
+  position: absolute;
+  top: 6px;
+  right: 50%;
+  transform: translateX(8px);
+  width: 6px;
+  height: 6px;
+  background: var(--color-accent);
+  border-radius: 50%;
+  border: 2px solid var(--color-background);
+}
+
+/* Animaciones */
+@keyframes pulse {
+  0% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.1);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+.nav-link.has-notification svg {
+  animation: pulse 2s infinite;
+}
+
+/* Media Queries */
+@media (min-width: 768px) {
+  .bottom-nav {
+    max-width: 600px;
+    left: 50%;
+    transform: translateX(-50%);
+    border-radius: var(--border-radius-lg) var(--border-radius-lg) 0 0;
+    margin-bottom: env(safe-area-inset-bottom, 0);
+  }
+}
+
+@media (max-height: 600px) {
+  .nav-link {
+    padding: 4px;
+  }
+
+  .nav-link svg {
+    font-size: 20px;
+    margin-bottom: 1px;
+  }
+
+  .nav-link span {
+    font-size: 10px;
+  }
+}
+
+/* Soporte para notched phones */
+@supports (padding: max(0px)) {
+  .bottom-nav {
+    padding-bottom: max(env(safe-area-inset-bottom), 8px);
+    height: calc(var(--nav-height) + env(safe-area-inset-bottom, 16px));
+  }
+}

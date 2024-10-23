@@ -6,6 +6,14 @@ import {
   Navigate,
   useLocation,
 } from "react-router-dom";
+
+// Importación de estilos base
+import "./styles/reset.css";
+import "./styles/theme.css";
+import "./styles/globals.css";
+import "./styles/components/layout.css";
+
+// Componentes
 import BottomNavBar from "./components/BottomNavBar";
 import Home from "./components/Home";
 import Orders from "./components/Orders";
@@ -16,6 +24,14 @@ import Profile from "./components/Profile";
 import Login from "./components/Login";
 import Register from "./components/Register";
 import AdminDashboard from "./components/AdminDashboard";
+
+// Componente Loading
+const LoadingScreen = () => (
+  <div className="loading-screen">
+    <div className="loading-spinner"></div>
+    <p>Cargando...</p>
+  </div>
+);
 
 function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -59,7 +75,7 @@ function App() {
 
   const PrivateRoute = ({ children, requiredRole = null }) => {
     if (loading) {
-      return <div>Cargando...</div>;
+      return <LoadingScreen />;
     }
     if (!isAuthenticated) {
       return <Navigate to="/login" />;
@@ -71,7 +87,7 @@ function App() {
   };
 
   if (loading) {
-    return <div>Cargando...</div>;
+    return <LoadingScreen />;
   }
 
   return (
@@ -96,70 +112,72 @@ function AppContent({
   const showNavBar = !location.pathname.startsWith("/crypto/");
 
   return (
-    <div className="App">
-      <Routes>
-        <Route
-          path="/login"
-          element={<Login setIsAuthenticated={setIsAuthenticated} />}
-        />
-        <Route path="/register" element={<Register />} />
-        <Route
-          path="/"
-          element={
-            <PrivateRoute>
-              <Home />
-            </PrivateRoute>
-          }
-        />
-        <Route
-          path="/orders"
-          element={
-            <PrivateRoute>
-              <Orders />
-            </PrivateRoute>
-          }
-        />
-        <Route
-          path="/market"
-          element={
-            <PrivateRoute>
-              <Market />
-            </PrivateRoute>
-          }
-        />
-        <Route
-          path="/crypto/:id"
-          element={
-            <PrivateRoute>
-              <CryptoDetail />
-            </PrivateRoute>
-          }
-        />
-        <Route
-          path="/wallet"
-          element={
-            <PrivateRoute>
-              <Wallet />
-            </PrivateRoute>
-          }
-        />
-        <Route
-          path="/profile"
-          element={
-            <PrivateRoute>
-              <Profile setIsAuthenticated={setIsAuthenticated} />
-            </PrivateRoute>
-          }
-        />
-        <Route
-          path="/admin/*"
-          element={
-            <PrivateRoute requiredRole="admin">
-              <AdminDashboard />
-            </PrivateRoute>
-          }
-        />
-      </Routes>
+    <div className="app-container">
+      <main className="main-content">
+        <Routes>
+          <Route
+            path="/login"
+            element={<Login setIsAuthenticated={setIsAuthenticated} />}
+          />
+          <Route path="/register" element={<Register />} />
+          <Route
+            path="/"
+            element={
+              <PrivateRoute>
+                <Home />
+              </PrivateRoute>
+            }
+          />
+          <Route
+            path="/orders"
+            element={
+              <PrivateRoute>
+                <Orders />
+              </PrivateRoute>
+            }
+          />
+          <Route
+            path="/market"
+            element={
+              <PrivateRoute>
+                <Market />
+              </PrivateRoute>
+            }
+          />
+          <Route
+            path="/crypto/:id"
+            element={
+              <PrivateRoute>
+                <CryptoDetail />
+              </PrivateRoute>
+            }
+          />
+          <Route
+            path="/wallet"
+            element={
+              <PrivateRoute>
+                <Wallet />
+              </PrivateRoute>
+            }
+          />
+          <Route
+            path="/profile"
+            element={
+              <PrivateRoute>
+                <Profile setIsAuthenticated={setIsAuthenticated} />
+              </PrivateRoute>
+            }
+          />
+          <Route
+            path="/admin/*"
+            element={
+              <PrivateRoute requiredRole="admin">
+                <AdminDashboard />
+              </PrivateRoute>
+            }
+          />
+        </Routes>
+      </main>
       {isAuthenticated && showNavBar && <BottomNavBar userRole={userRole} />}
     </div>
   );

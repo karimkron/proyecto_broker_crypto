@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { motion, AnimatePresence } from "framer-motion";
 import ChangePassword from "./ChangePassword";
 import KYCForm from "./KYCForm";
 import {
@@ -10,8 +11,12 @@ import {
   FaIdCard,
   FaSignOutAlt,
   FaChartLine,
+  FaCheckCircle,
+  FaMedal,
+  FaHistory,
+  FaClock,
 } from "react-icons/fa";
-import "./Profile.css";
+import "../styles/pages/Profile.css";
 
 const Profile = ({ setIsAuthenticated }) => {
   const [user, setUser] = useState(null);
@@ -42,7 +47,7 @@ const Profile = ({ setIsAuthenticated }) => {
           throw new Error("Failed to fetch user data");
         }
       } catch (err) {
-        setError("Error fetching user data");
+        setError("Error al cargar los datos del usuario");
         console.error(err);
       } finally {
         setLoading(false);
@@ -68,63 +73,146 @@ const Profile = ({ setIsAuthenticated }) => {
     setShowChangePassword(false);
   };
 
-  if (loading) return <div className="loading">Cargando...</div>;
-  if (error) return <div className="error">{error}</div>;
+  if (loading)
+    return (
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        className="loading"
+      >
+        <FaClock size={24} className="loading-icon" />
+      </motion.div>
+    );
+
+  if (error)
+    return (
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        className="error"
+      >
+        {error}
+      </motion.div>
+    );
 
   return (
-    <div className="profile-container">
-      <div className="profile-header">
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      className="profile-container"
+    >
+      <motion.div
+        initial={{ y: -20 }}
+        animate={{ y: 0 }}
+        className="profile-header"
+      >
         <h1>Perfil del Trader</h1>
-        <button className="logout-button" onClick={handleLogout}>
+        <motion.button
+          whileHover={{ scale: 1.05 }}
+          whileTap={{ scale: 0.95 }}
+          className="logout-button"
+          onClick={handleLogout}
+        >
           <FaSignOutAlt /> Cerrar Sesión
-        </button>
-      </div>
+        </motion.button>
+      </motion.div>
+
       {user && (
         <div className="profile-content">
-          <div className="profile-info">
-            <div className="info-item">
+          <motion.div
+            initial={{ opacity: 0, x: -20 }}
+            animate={{ opacity: 1, x: 0 }}
+            className="profile-info"
+          >
+            <motion.div className="info-item">
               <FaUser className="icon" />
-              <p>
-                <strong>Usuario:</strong> {user.email.split("@")[0]}
-              </p>
-            </div>
-            <div className="info-item">
+              <div>
+                <strong>Usuario</strong>
+                <p>{user.email.split("@")[0]}</p>
+              </div>
+              <span className="verified-badge">
+                <FaCheckCircle /> Verificado
+              </span>
+            </motion.div>
+
+            <motion.div className="info-item">
               <FaEnvelope className="icon" />
-              <p>
-                <strong>Email:</strong> {user.email}
-              </p>
-            </div>
-            <div className="info-item">
+              <div>
+                <strong>Email</strong>
+                <p>{user.email}</p>
+              </div>
+            </motion.div>
+
+            <motion.div className="info-item">
               <FaCalendar className="icon" />
-              <p>
-                <strong>Cuenta creada:</strong>{" "}
-                {new Date(user.date).toLocaleDateString()}
-              </p>
-            </div>
-            <div className="info-item">
+              <div>
+                <strong>Fecha de Registro</strong>
+                <p>{new Date(user.date).toLocaleDateString()}</p>
+              </div>
+            </motion.div>
+
+            <motion.div className="info-item">
               <FaChartLine className="icon" />
-              <p>
-                <strong>Nivel de Trader:</strong> Profesional
-              </p>
-            </div>
-          </div>
-          <div className="profile-actions">
-            <button className="action-button" onClick={handleChangePassword}>
+              <div>
+                <strong>Nivel de Trader</strong>
+                <p>Profesional</p>
+              </div>
+              <span className="level-badge">
+                <FaMedal /> Pro
+              </span>
+            </motion.div>
+
+            <motion.div className="info-item">
+              <FaHistory className="icon" />
+              <div>
+                <strong>Total de Operaciones</strong>
+                <p>127 trades</p>
+              </div>
+            </motion.div>
+          </motion.div>
+
+          <motion.div
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
+            className="profile-actions"
+          >
+            <motion.button
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+              className="action-button"
+              onClick={handleChangePassword}
+            >
               <FaLock className="icon" />
               {showChangePassword ? "Cancelar" : "Cambiar Contraseña"}
-            </button>
-            <button className="action-button" onClick={handleKYC}>
+            </motion.button>
+
+            <motion.button
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+              className="action-button"
+              onClick={handleKYC}
+            >
               <FaIdCard className="icon" />
               {showKYCForm ? "Cancelar KYC" : "Realizar KYC"}
-            </button>
-          </div>
-          <div className="profile-forms">
-            {showChangePassword && <ChangePassword />}
-            {showKYCForm && <KYCForm />}
-          </div>
+            </motion.button>
+          </motion.div>
+
+          <AnimatePresence>
+            {(showChangePassword || showKYCForm) && (
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: 20 }}
+                className="profile-forms"
+              >
+                {showChangePassword && <ChangePassword />}
+                {showKYCForm && <KYCForm />}
+              </motion.div>
+            )}
+          </AnimatePresence>
         </div>
       )}
-    </div>
+    </motion.div>
   );
 };
 

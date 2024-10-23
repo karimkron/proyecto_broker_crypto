@@ -10,9 +10,10 @@ import {
   ResponsiveContainer,
   ReferenceLine,
 } from "recharts";
-import { FaArrowLeft } from "react-icons/fa";
+import { FaArrowLeft, FaChartLine } from "react-icons/fa";
+import { motion } from "framer-motion";
 import TradeModal from "./TradeModal";
-import "./CryptoDetail.css";
+import "../styles/pages/CryptoDetail.css";
 
 const timeRanges = [
   { label: "1M", days: 1 / 1440 },
@@ -32,7 +33,7 @@ const CryptoDetail = () => {
   const [error, setError] = useState(null);
   const [showTradeModal, setShowTradeModal] = useState(false);
   const [tradeType, setTradeType] = useState("");
-  const [selectedTimeRange, setSelectedTimeRange] = useState(timeRanges[5]);
+  const [selectedTimeRange, setSelectedTimeRange] = useState(timeRanges[0]);
   const [simulatedOrders, setSimulatedOrders] = useState([]);
 
   useEffect(() => {
@@ -51,7 +52,7 @@ const CryptoDetail = () => {
       } catch (error) {
         console.error("Error fetching crypto data:", error);
         setError(
-          "No se pudo cargar la información de la criptomoneda. Es posible que estés viendo datos simulados."
+          "No se pudo cargar la información de la criptomoneda. Por favor, intente más tarde."
         );
       } finally {
         setLoading(false);
@@ -62,22 +63,38 @@ const CryptoDetail = () => {
   }, [id, selectedTimeRange]);
 
   useEffect(() => {
+    if (!cryptoData) return;
+
     const generateSimulatedOrder = () => {
       const direction = Math.random() > 0.5 ? "Compra" : "Venta";
-      const price = cryptoData ? cryptoData.current_price : 0;
-      const amount = (Math.random() * 1 + 0.0001).toFixed(4);
-      const order = {
-        time: new Date().toLocaleTimeString(),
+      const price = cryptoData.current_price;
+      const amount = (Math.random() * 0.5 + 0.1).toFixed(4);
+      return {
+        time: new Date().toLocaleTimeString([], {
+          hour: "2-digit",
+          minute: "2-digit",
+          second: "2-digit",
+        }),
         direction,
         price: price.toFixed(2),
         amount,
       };
-      setSimulatedOrders((prevOrders) => [order, ...prevOrders.slice(0, 4)]);
     };
 
+    setSimulatedOrders([
+      generateSimulatedOrder(),
+      generateSimulatedOrder(),
+      generateSimulatedOrder(),
+      generateSimulatedOrder(),
+      generateSimulatedOrder(),
+    ]);
+
     const interval = setInterval(() => {
-      generateSimulatedOrder();
-    }, Math.floor(Math.random() * 1000) + 20);
+      setSimulatedOrders((prev) => [
+        generateSimulatedOrder(),
+        ...prev.slice(0, 4),
+      ]);
+    }, 3000);
 
     return () => clearInterval(interval);
   }, [cryptoData]);
@@ -94,9 +111,8 @@ const CryptoDetail = () => {
         hour: "2-digit",
         minute: "2-digit",
       });
-    } else {
-      return date.toLocaleDateString();
     }
+    return date.toLocaleDateString();
   };
 
   const CustomTooltip = ({ active, payload, label }) => {
@@ -104,19 +120,26 @@ const CryptoDetail = () => {
       const data = payload[0].payload;
       return (
         <div className="custom-tooltip">
-          <p>{`Time: ${new Date(label).toLocaleString()}`}</p>
-          <p>{`Open: $${data.open.toFixed(2)}`}</p>
-          <p>{`High: $${data.high.toFixed(2)}`}</p>
-          <p>{`Low: $${data.low.toFixed(2)}`}</p>
-          <p>{`Close: $${data.close.toFixed(2)}`}</p>
+          <p>{`Tiempo: ${new Date(label).toLocaleString()}`}</p>
+          <p>{`Apertura: $${data.open.toFixed(2)}`}</p>
+          <p>{`Máximo: $${data.high.toFixed(2)}`}</p>
+          <p>{`Mínimo: $${data.low.toFixed(2)}`}</p>
+          <p>{`Cierre: $${data.close.toFixed(2)}`}</p>
         </div>
       );
     }
     return null;
   };
 
-  if (loading) return <div className="loading">Cargando...</div>;
+  if (loading)
+    return (
+      <div className="loading">
+        <FaChartLine size={24} />
+      </div>
+    );
+
   if (error) return <div className="error-message">{error}</div>;
+
   if (!cryptoData || chartData.length === 0)
     return (
       <div className="error-message">
@@ -129,9 +152,11 @@ const CryptoDetail = () => {
       <div className="back-arrow" onClick={() => navigate(-1)}>
         <FaArrowLeft />
       </div>
+
       <div className="header">
-        <h1>{cryptoData.symbol.toUpperCase() + "/USDT"}</h1>
+        <h1>{cryptoData.symbol.toUpperCase()}/USDT</h1>
         <div className="crypto-info">
+          <p>${cryptoData.current_price.toFixed(2)}</p>
           <p
             className={
               cryptoData.price_change_percentage_24h > 0
@@ -139,19 +164,12 @@ const CryptoDetail = () => {
                 : "negative"
             }
           >
-            ${cryptoData.current_price.toFixed(2)}
-          </p>
-          <p
-            className={
-              cryptoData.price_change_percentage_24h > 0
-                ? "positive"
-                : "negative"
-            }
-          >
+            {cryptoData.price_change_percentage_24h > 0 ? "+" : ""}
             {cryptoData.price_change_percentage_24h.toFixed(2)}%
           </p>
         </div>
       </div>
+
       <div className="main-content">
         <div className="chart-container">
           <div className="time-range-buttons">
@@ -169,12 +187,20 @@ const CryptoDetail = () => {
           </div>
           <ResponsiveContainer width="100%" height="100%">
             <ComposedChart data={chartData}>
-              <XAxis dataKey="timestamp" tickFormatter={formatXAxis} />
-              <YAxis domain={["auto", "auto"]} orientation="right" />
+              <XAxis
+                dataKey="timestamp"
+                tickFormatter={formatXAxis}
+                minTickGap={30}
+                tick={{ fontSize: 10 }}
+              />
+              <YAxis
+                domain={["auto", "auto"]}
+                orientation="right"
+                tick={{ fontSize: 10 }}
+              />
               <Tooltip content={<CustomTooltip />} />
-              <Bar dataKey="low" fill="transparent" yAxisId={0} />
-              <Bar dataKey="high" fill="transparent" yAxisId={0} />
-              <ReferenceLine y={0} stroke="#000" />
+              <Bar dataKey="low" fill="transparent" />
+              <Bar dataKey="high" fill="transparent" />
               {chartData.map((entry, index) => (
                 <ReferenceLine
                   key={`candle-${index}`}
@@ -182,7 +208,8 @@ const CryptoDetail = () => {
                     { x: entry.timestamp, y: entry.low },
                     { x: entry.timestamp, y: entry.high },
                   ]}
-                  stroke={entry.open > entry.close ? "#ff0000" : "#00ff00"}
+                  stroke={entry.open > entry.close ? "#e74c3c" : "#2ecc71"}
+                  strokeWidth={2}
                 />
               ))}
               {chartData.map((entry, index) => (
@@ -192,14 +219,15 @@ const CryptoDetail = () => {
                     { x: entry.timestamp, y: entry.open },
                     { x: entry.timestamp, y: entry.close },
                   ]}
-                  stroke={entry.open > entry.close ? "#ff0000" : "#00ff00"}
-                  strokeWidth={5}
+                  stroke={entry.open > entry.close ? "#e74c3c" : "#2ecc71"}
+                  strokeWidth={4}
                 />
               ))}
             </ComposedChart>
           </ResponsiveContainer>
         </div>
       </div>
+
       <div className="trade-section">
         <div className="simulated-orders">
           <div className="title-orders">
@@ -213,14 +241,14 @@ const CryptoDetail = () => {
               {simulatedOrders.map((order, index) => (
                 <tr key={index}>
                   <td>{order.time}</td>
-                  <td
+                  <td 
                     className={
                       order.direction === "Compra" ? "positive" : "negative"
                     }
                   >
                     {order.direction}
                   </td>
-                  <td>{order.price}</td>
+                  <td>${order.price}</td>
                   <td>{order.amount}</td>
                 </tr>
               ))}
@@ -236,6 +264,7 @@ const CryptoDetail = () => {
           </button>
         </div>
       </div>
+
       {showTradeModal && (
         <TradeModal
           cryptoData={cryptoData}

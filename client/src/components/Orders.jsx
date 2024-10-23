@@ -1,7 +1,20 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
 import io from "socket.io-client";
-import "./Orders.css";
+import { motion, AnimatePresence } from "framer-motion";
+import {
+  FaHistory,
+  FaClock,
+  FaSpinner,
+  FaExclamationTriangle,
+  FaChartLine,
+  FaCheckCircle,
+  FaHourglassHalf,
+  FaDollarSign,
+  FaCalendarAlt,
+  FaClock as FaDuration,
+} from "react-icons/fa";
+import "../styles/pages/Orders.css";
 
 const Orders = () => {
   const [orders, setOrders] = useState([]);
@@ -68,57 +81,159 @@ const Orders = () => {
   }, []);
 
   if (loading) {
-    return <div className="loading">Cargando órdenes...</div>;
+    return (
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        className="loading"
+      >
+        <FaSpinner className="loading-spinner" size={24} />
+        <span>Cargando órdenes...</span>
+      </motion.div>
+    );
   }
 
   if (error) {
-    return <div className="error-message">{error}</div>;
+    return (
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        className="error-message"
+      >
+        <FaExclamationTriangle />
+        <span>{error}</span>
+      </motion.div>
+    );
   }
 
   return (
-    <div className="orders-container">
-      <h2>Historial de Órdenes</h2>
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      className="orders-container"
+    >
+      <motion.div
+        initial={{ y: -20 }}
+        animate={{ y: 0 }}
+        className="orders-header"
+      >
+        <h2>
+          <FaHistory /> Historial de Órdenes
+        </h2>
+      </motion.div>
+
       {orders.length === 0 ? (
-        <p>No hay órdenes para mostrar.</p>
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          className="no-orders"
+        >
+          <FaClock size={48} />
+          <p>No hay órdenes para mostrar.</p>
+        </motion.div>
       ) : (
-        <div className="orders-list">
-          {orders.map((order) => (
-            <div key={order._id} className="order-item">
-              <div className="order-header">
-                <span>{order.cryptoSymbol}</span>
-                <span>{new Date(order.createdAt).toLocaleString()}</span>
-              </div>
-              <div className="order-details">
-                <div>Cantidad: ${order.amount.toFixed(2)}</div>
-                <div>Duración: {order.duration}</div>
-                <div>
-                  Ganancia Estimada: ${order.estimatedProfit.toFixed(2)}
+        <motion.div className="orders-list">
+          <AnimatePresence>
+            {orders.map((order, index) => (
+              <motion.div
+                key={order._id}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, scale: 0.95 }}
+                transition={{ delay: index * 0.1 }}
+                className="order-item"
+              >
+                <div className="order-header">
+                  <div className="crypto-info">
+                    <FaChartLine />
+                    <span className="crypto-symbol">{order.cryptoSymbol}</span>
+                  </div>
+                  <div className="order-date">
+                    <FaCalendarAlt />
+                    {new Date(order.createdAt).toLocaleDateString()}
+                  </div>
                 </div>
-                {order.status === "en progreso" ? (
-                  <div className="order-progress">
-                    <div
-                      className="progress-bar"
-                      style={{ width: `${(order.progress || 0) * 100}%` }}
-                    ></div>
-                    <div className="current-profit">
-                      ${(order.currentProfit || 0).toFixed(2)}
+
+                <div className="order-details">
+                  <div className="detail-item">
+                    <span className="detail-label">
+                      <FaDollarSign /> Cantidad
+                    </span>
+                    <span className="detail-value">
+                      ${order.amount.toFixed(2)}
+                    </span>
+                  </div>
+
+                  <div className="detail-item">
+                    <span className="detail-label">
+                      <FaDuration /> Duración
+                    </span>
+                    <span className="detail-value">{order.duration}</span>
+                  </div>
+
+                  <div className="detail-item">
+                    <span className="detail-label">
+                      <FaChartLine /> Ganancia Estimada
+                    </span>
+                    <span className="detail-value">
+                      ${order.estimatedProfit.toFixed(2)}
+                    </span>
+                  </div>
+
+                  {order.status === "en progreso" ? (
+                    <div className="order-progress-container">
+                      <div className="order-progress">
+                        <motion.div
+                          className="progress-bar"
+                          initial={{ width: "0%" }}
+                          animate={{ width: `${(order.progress || 0) * 100}%` }}
+                        />
+                      </div>
+                      <div className="current-profit">
+                        <FaDollarSign />
+                        {(order.currentProfit || 0).toFixed(2)}
+                      </div>
                     </div>
+                  ) : (
+                    <div className="detail-item">
+                      <span className="detail-label">
+                        <FaCheckCircle /> Ganancia Final
+                      </span>
+                      <span
+                        className={`detail-value ${
+                          order.finalProfit > 0
+                            ? "profit-positive"
+                            : "profit-negative"
+                        }`}
+                      >
+                        $
+                        {order.finalProfit
+                          ? order.finalProfit.toFixed(2)
+                          : "N/A"}
+                      </span>
+                    </div>
+                  )}
+
+                  <div className="detail-item">
+                    <motion.span
+                      className={`order-status ${order.status}`}
+                      whileHover={{ scale: 1.05 }}
+                    >
+                      {order.status === "en progreso" && <FaHourglassHalf />}
+                      {order.status === "completada" && <FaCheckCircle />}
+                      {order.status === "cancelada" && (
+                        <FaExclamationTriangle />
+                      )}
+                      {" " + order.status}
+                    </motion.span>
                   </div>
-                ) : (
-                  <div>
-                    Ganancia Final: $
-                    {order.finalProfit ? order.finalProfit.toFixed(2) : "N/A"}
-                  </div>
-                )}
-                <div className={`order-status ${order.status}`}>
-                  {order.status}
                 </div>
-              </div>
-            </div>
-          ))}
-        </div>
+              </motion.div>
+            ))}
+          </AnimatePresence>
+        </motion.div>
       )}
-    </div>
+    </motion.div>
   );
 };
 

@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { Link, Route, Routes, useLocation } from "react-router-dom";
+import { motion, AnimatePresence } from "framer-motion";
 import {
   FaUsers,
   FaKey,
@@ -11,13 +12,14 @@ import {
   FaBell,
   FaUserCircle,
   FaCog,
+  FaChevronRight,
 } from "react-icons/fa";
 import UserManagement from "./AdminComponents/UserManagement";
 import InvitationCodeManager from "./AdminComponents/InvitationCodeManager";
 import MarketManipulation from "./AdminComponents/MarketManipulation";
 import DepositForm from "./AdminComponents/DepositForm";
 import withAdminAuth from "./withAdminAuth.jsx";
-import "./AdminDashboard.css";
+import "../styles/pages/AdminDashboard.css";
 
 const AdminDashboard = () => {
   const location = useLocation();
@@ -75,55 +77,116 @@ const AdminDashboard = () => {
   ];
 
   return (
-    <div className="admin-dashboard">
-      <header className="dashboard-header">
-        <button className="menu-toggle" onClick={toggleMenu}>
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      className="admin-dashboard"
+    >
+      <motion.header
+        initial={{ y: -20 }}
+        animate={{ y: 0 }}
+        className="dashboard-header"
+      >
+        <motion.button
+          whileHover={{ scale: 1.05 }}
+          whileTap={{ scale: 0.95 }}
+          className="menu-toggle"
+          onClick={toggleMenu}
+        >
           {menuOpen ? <FaTimes /> : <FaBars />}
-        </button>
-        <div className="header-brand">
+        </motion.button>
+        <motion.div className="header-brand" whileHover={{ scale: 1.05 }}>
           <FaTachometerAlt />
-          <span>Admin Panel</span>
-        </div>
+          <span>Panel de Administración</span>
+        </motion.div>
         <div className="header-actions">
-          <button className="header-icon">
+          <motion.button
+            whileHover={{ scale: 1.05, y: -2 }}
+            whileTap={{ scale: 0.95 }}
+            className="header-icon"
+          >
             <FaBell />
-            <span className="notification-badge">3</span>
-          </button>
-          <button className="header-icon">
+            <motion.span
+              initial={{ scale: 0 }}
+              animate={{ scale: 1 }}
+              className="notification-badge"
+            >
+              3
+            </motion.span>
+          </motion.button>
+          <motion.button
+            whileHover={{ scale: 1.05, y: -2 }}
+            whileTap={{ scale: 0.95 }}
+            className="header-icon"
+          >
             <FaCog />
-          </button>
-          <div className="admin-profile">
+          </motion.button>
+          <motion.div
+            whileHover={{ scale: 1.05, y: -2 }}
+            whileTap={{ scale: 0.95 }}
+            className="admin-profile"
+          >
             <FaUserCircle />
             <span className="admin-name">Admin</span>
-          </div>
+          </motion.div>
         </div>
-      </header>
+      </motion.header>
 
       <div className={`dashboard-container ${menuOpen ? "menu-open" : ""}`}>
-        <nav className={`dashboard-nav ${menuOpen ? "open" : ""}`}>
-          {navItems.map((item) => {
-            const Icon = item.icon;
-            const isActive = location.pathname === `${baseUrl}/${item.path}`;
-            return (
-              <Link
-                key={item.path}
-                to={`${baseUrl}/${item.path}`}
-                className={`nav-item ${isActive ? "active" : ""}`}
-                onClick={closeMenu}
-              >
-                <Icon className="nav-icon" />
-                <div className="nav-text">
-                  <span className="nav-title">{item.text}</span>
-                  <span className="nav-description">{item.description}</span>
-                </div>
-              </Link>
-            );
-          })}
-        </nav>
+        <AnimatePresence>
+          <motion.nav
+            initial={isMobile ? { x: -280 } : false}
+            animate={isMobile ? { x: menuOpen ? 0 : -280 } : false}
+            transition={{ type: "spring", bounce: 0, duration: 0.4 }}
+            className={`dashboard-nav ${menuOpen ? "open" : ""}`}
+          >
+            {navItems.map((item, index) => {
+              const Icon = item.icon;
+              const isActive = location.pathname === `${baseUrl}/${item.path}`;
+              return (
+                <motion.div
+                  initial={{ opacity: 0, x: -20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: index * 0.1 }}
+                  key={item.path}
+                >
+                  <Link
+                    to={`${baseUrl}/${item.path}`}
+                    className={`nav-item ${isActive ? "active" : ""}`}
+                    onClick={closeMenu}
+                  >
+                    <Icon className="nav-icon" />
+                    <div className="nav-text">
+                      <span className="nav-title">{item.text}</span>
+                      <span className="nav-description">
+                        {item.description}
+                      </span>
+                    </div>
+                    <motion.div
+                      animate={{ x: isActive ? 5 : 0 }}
+                      transition={{ type: "spring", stiffness: 300 }}
+                    >
+                      <FaChevronRight size={12} />
+                    </motion.div>
+                  </Link>
+                </motion.div>
+              );
+            })}
+          </motion.nav>
+        </AnimatePresence>
 
-        <main className="dashboard-main">
+        <motion.main
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.2 }}
+          className="dashboard-main"
+        >
           <div className="dashboard-content">
-            <div className="content-header">
+            <motion.div
+              initial={{ opacity: 0, y: -20 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="content-header"
+            >
               <h1>
                 {navItems.find((item) => location.pathname.includes(item.path))
                   ?.text || "Dashboard"}
@@ -133,20 +196,30 @@ const AdminDashboard = () => {
                 {navItems.find((item) => location.pathname.includes(item.path))
                   ?.text || "Dashboard"}
               </div>
-            </div>
-            <Routes>
-              <Route path="users" element={<UserManagement />} />
-              <Route
-                path="invitation-codes"
-                element={<InvitationCodeManager />}
-              />
-              <Route path="market" element={<MarketManipulation />} />
-              <Route path="deposit" element={<DepositForm />} />
-            </Routes>
+            </motion.div>
+            <AnimatePresence mode="wait">
+              <motion.div
+                key={location.pathname}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -20 }}
+                transition={{ duration: 0.2 }}
+              >
+                <Routes>
+                  <Route path="users" element={<UserManagement />} />
+                  <Route
+                    path="invitation-codes"
+                    element={<InvitationCodeManager />}
+                  />
+                  <Route path="market" element={<MarketManipulation />} />
+                  <Route path="deposit" element={<DepositForm />} />
+                </Routes>
+              </motion.div>
+            </AnimatePresence>
           </div>
-        </main>
+        </motion.main>
       </div>
-    </div>
+    </motion.div>
   );
 };
 

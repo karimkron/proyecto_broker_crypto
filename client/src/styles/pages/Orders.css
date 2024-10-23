@@ -1,0 +1,228 @@
+.orders-container {
+  height: 100%;
+  width: 100%;
+  padding: 1rem;
+  color: #ffffff;
+  font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+    sans-serif;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  overflow-y: auto;
+}
+
+.orders-header {
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 20px;
+  padding: 1.5rem;
+}
+
+.orders-header h2 {
+  font-size: 1.5rem;
+  font-weight: 700;
+  margin: 0;
+  background: linear-gradient(135deg, #4834d4 0%, #686de0 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.orders-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 1rem;
+  padding: 0.5rem;
+}
+
+.order-item {
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 16px;
+  padding: 1.25rem;
+  transition: all 0.3s ease;
+}
+
+.order-item:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+}
+
+.order-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.crypto-info {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.crypto-symbol {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #fff;
+}
+
+.order-date {
+  font-size: 0.875rem;
+  color: rgba(255, 255, 255, 0.6);
+}
+
+.order-details {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.detail-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.875rem;
+}
+
+.detail-label {
+  color: rgba(255, 255, 255, 0.6);
+}
+
+.detail-value {
+  font-weight: 500;
+}
+
+.order-progress-container {
+  margin-top: 1rem;
+  padding: 1rem;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 12px;
+}
+
+.order-progress {
+  position: relative;
+  height: 8px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 4px;
+  overflow: hidden;
+  margin: 0.75rem 0;
+}
+
+.progress-bar {
+  height: 100%;
+  background: linear-gradient(135deg, #4834d4 0%, #686de0 100%);
+  transition: width 0.5s ease-in-out;
+  border-radius: 4px;
+}
+
+.current-profit {
+  font-size: 1rem;
+  font-weight: 600;
+  text-align: center;
+  color: #4834d4;
+  margin-top: 0.5rem;
+}
+
+.order-status {
+  display: inline-block;
+  padding: 0.5rem 1rem;
+  border-radius: 8px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.en-progreso {
+  background: rgba(72, 52, 212, 0.2);
+  color: #4834d4;
+  border: 1px solid rgba(72, 52, 212, 0.4);
+}
+
+.completada {
+  background: rgba(46, 204, 113, 0.2);
+  color: #2ecc71;
+  border: 1px solid rgba(46, 204, 113, 0.4);
+}
+
+.cancelada {
+  background: rgba(231, 76, 60, 0.2);
+  color: #e74c3c;
+  border: 1px solid rgba(231, 76, 60, 0.4);
+}
+
+.profit-positive {
+  color: #2ecc71;
+}
+
+.profit-negative {
+  color: #e74c3c;
+}
+
+.loading {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 200px;
+  gap: 1rem;
+  color: #fff;
+}
+
+.loading-spinner {
+  animation: spin 1s linear infinite;
+}
+
+.error-message {
+  background: rgba(231, 76, 60, 0.2);
+  border: 1px solid rgba(231, 76, 60, 0.4);
+  color: #e74c3c;
+  padding: 1rem;
+  border-radius: 12px;
+  text-align: center;
+  margin: 1rem;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Media Queries */
+@media (max-width: 768px) {
+  .orders-container {
+    padding: 0.75rem;
+  }
+
+  .orders-list {
+    grid-template-columns: 1fr;
+  }
+
+  .order-item {
+    padding: 1rem;
+  }
+}
+
+/* Scrollbar personalizado */
+.orders-container::-webkit-scrollbar {
+  width: 6px;
+}
+
+.orders-container::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.1);
+}
+
+.orders-container::-webkit-scrollbar-thumb {
+  background: rgba(72, 52, 212, 0.5);
+  border-radius: 3px;
+}
+
+.orders-container::-webkit-scrollbar-thumb:hover {
+  background: rgba(72, 52, 212, 0.7);
+}

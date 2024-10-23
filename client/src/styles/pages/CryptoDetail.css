@@ -1,0 +1,274 @@
+.crypto-detail {
+  height: 100vh;
+  width: 100%;
+  color: #ffffff;
+  font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+    sans-serif;
+  display: flex;
+  flex-direction: column;
+  background: rgb(26, 31, 44);
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  overflow: hidden;
+}
+
+.back-arrow {
+  position: absolute;
+  top: 1rem;
+  left: 1rem;
+  cursor: pointer;
+  font-size: 1.25rem;
+  z-index: 10;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 50%;
+}
+
+.header {
+  padding: 0.75rem 1rem 0.75rem 3rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  height: 60px;
+  width: 100%;
+}
+
+.header h1 {
+  font-size: 1.25rem;
+  font-weight: 600;
+  margin: 0;
+  margin-left: 10px;
+  color: #fff;
+}
+
+.crypto-info {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.crypto-info p {
+  font-size: 1rem;
+  margin: 0;
+  padding: 0.25rem 0.5rem;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.1);
+  white-space: nowrap;
+  margin-left: auto;
+}
+
+.main-content {
+  flex: 3;
+  display: flex;
+  flex-direction: column;
+  height: auto;
+  width: 100%;
+  padding: 0;
+}
+
+.chart-container {
+  flex: 1;
+  min-height: 0;
+  padding: 0.5rem;
+  display: flex;
+  flex-direction: column;
+  background: rgba(26, 31, 44, 0.95);
+}
+
+.time-range-buttons {
+  display: flex;
+  overflow-x: auto;
+  padding: 0.5rem;
+  gap: 0.5rem;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+  background: rgba(26, 31, 44, 0.98);
+  border-radius: 8px;
+  margin-bottom: 0.5rem;
+}
+
+.time-range-buttons::-webkit-scrollbar {
+  display: none;
+}
+
+.time-range-buttons button {
+  background: rgba(255, 255, 255, 0.1);
+  border: none;
+  color: #fff;
+  padding: 0.5rem 1rem;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.875rem;
+  width: 50px;
+  flex-shrink: 0;
+}
+
+.time-range-buttons button.active {
+  background: rgba(72, 52, 212, 0.6);
+}
+
+.trade-section {
+  flex: 1;
+  background: rgba(26, 31, 44, 0.98);
+  position: relative;
+  padding-bottom: 60px;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  display: flex;
+  flex-direction: column;
+}
+
+.title-orders {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  padding: 8px 4px;
+  font-size: 0.75rem;
+  color: rgba(255, 255, 255, 0.6);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  position: sticky;
+  top: 0;
+  background: rgba(26, 31, 44, 0.98);
+  z-index: 2;
+}
+
+.title-orders p {
+  margin: 0;
+  text-align: center;
+  padding: 0 4px;
+}
+
+.simulated-orders {
+  flex: 1;
+  overflow-y: auto;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+  display: flex;
+  flex-direction: column;
+}
+
+.simulated-orders::-webkit-scrollbar {
+  display: none;
+}
+
+.simulated-orders table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0 4px;
+}
+
+.orders-position tr {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  text-align: center;
+  font-size: 0.75rem;
+  padding: 4px;
+}
+
+.orders-position td {
+  padding: 4px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-width: 0;
+}
+
+.trade-buttons {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  display: flex;
+  gap: 0.5rem;
+  padding: 8px;
+  background: rgba(26, 31, 44, 0.98);
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.buy-button,
+.sell-button {
+  flex: 1;
+  padding: 0.75rem;
+  border: none;
+  border-radius: 8px;
+  color: #fff;
+  font-weight: 600;
+  font-size: 0.875rem;
+  cursor: pointer;
+}
+
+.buy-button {
+  background: #2ecc71;
+}
+
+.sell-button {
+  background: #e74c3c;
+}
+
+.positive {
+  color: #2ecc71;
+}
+
+.negative {
+  color: #e74c3c;
+}
+
+.custom-tooltip {
+  background: rgba(26, 31, 44, 0.98);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  padding: 0.5rem;
+  border-radius: 6px;
+  font-size: 0.75rem;
+}
+
+.custom-tooltip p {
+  margin: 0.25rem 0;
+  color: rgba(255, 255, 255, 0.9);
+}
+
+.loading {
+  height: 100vh;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgb(26, 31, 44);
+}
+
+.error-message {
+  height: 100vh;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  text-align: center;
+  background: rgb(26, 31, 44);
+}
+
+@media (max-width: 360px) {
+  .orders-position tr {
+    font-size: 0.7rem;
+  }
+
+  .title-orders p {
+    font-size: 0.7rem;
+  }
+
+  .trade-buttons {
+    padding: 6px;
+  }
+
+  .buy-button,
+  .sell-button {
+    padding: 0.5rem;
+    font-size: 0.8rem;
+  }
+}

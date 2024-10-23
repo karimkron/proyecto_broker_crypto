@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { FaArrowLeft } from "react-icons/fa";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
-import "./TradeModal.css";
+import "../styles/pages/TradeModal.css";
 
 const TradeModal = ({ cryptoData, tradeType, onClose }) => {
   const [amount, setAmount] = useState("");

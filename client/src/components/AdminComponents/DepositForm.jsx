@@ -1,5 +1,17 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
+import { motion, AnimatePresence } from "framer-motion";
+import {
+  FaMoneyBillWave,
+  FaExchangeAlt,
+  FaUserCircle,
+  FaArrowUp,
+  FaArrowDown,
+  FaHistory,
+  FaCalendarAlt,
+  FaCheckCircle,
+  FaExclamationCircle,
+} from "react-icons/fa";
 import "./DepositForm.css";
 
 const DepositForm = () => {
@@ -7,9 +19,11 @@ const DepositForm = () => {
   const [selectedUser, setSelectedUser] = useState("");
   const [amount, setAmount] = useState("");
   const [message, setMessage] = useState("");
+  const [messageType, setMessageType] = useState("");
   const [eurToUSDT, setEurToUSDT] = useState(null);
   const [action, setAction] = useState("deposit");
   const [transactions, setTransactions] = useState([]);
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     const fetchUsers = async () => {
@@ -25,6 +39,7 @@ const DepositForm = () => {
       } catch (error) {
         console.error("Error fetching users:", error);
         setMessage("Error al cargar los usuarios");
+        setMessageType("error");
       }
     };
 
@@ -45,6 +60,7 @@ const DepositForm = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setLoading(true);
     try {
       const token = localStorage.getItem("token");
       const response = await axios.post(
@@ -58,8 +74,6 @@ const DepositForm = () => {
         }
       );
 
-      console.log("Server response:", response.data);
-
       if (
         response.data &&
         response.data.newBalanceEUR !== undefined &&
@@ -72,6 +86,7 @@ const DepositForm = () => {
             2
           )} EUR (${response.data.newBalanceUSDT.toFixed(2)} USDT)`
         );
+        setMessageType("success");
         fetchTransactions(selectedUser);
       } else {
         setMessage(
@@ -79,6 +94,7 @@ const DepositForm = () => {
             action === "deposit" ? "Depósito" : "Retiro"
           } realizado, pero no se pudo obtener el nuevo balance`
         );
+        setMessageType("error");
       }
 
       setSelectedUser("");
@@ -93,6 +109,9 @@ const DepositForm = () => {
           action === "deposit" ? "depósito" : "retiro"
         }: ${error.response?.data?.msg || error.message}`
       );
+      setMessageType("error");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -109,16 +128,54 @@ const DepositForm = () => {
     } catch (error) {
       console.error("Error fetching transactions:", error);
       setMessage("Error al cargar las transacciones");
+      setMessageType("error");
     }
   };
 
   return (
-    <div className="deposit-form">
-      <h2>Gestionar Billetera de Usuario</h2>
-      {message && <p className="message">{message}</p>}
-      <form onSubmit={handleSubmit}>
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      className="deposit-form"
+    >
+      <motion.div
+        initial={{ y: -20 }}
+        animate={{ y: 0 }}
+        className="deposit-header"
+      >
+        <h2>
+          <FaMoneyBillWave /> Gestión de Billeteras
+        </h2>
+      </motion.div>
+
+      <AnimatePresence>
+        {message && (
+          <motion.div
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -20 }}
+            className={`message ${messageType}`}
+          >
+            {messageType === "success" ? (
+              <FaCheckCircle />
+            ) : (
+              <FaExclamationCircle />
+            )}
+            {message}
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      <motion.form
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.2 }}
+        onSubmit={handleSubmit}
+      >
         <div className="form-group">
-          <label htmlFor="user">Usuario:</label>
+          <label htmlFor="user">
+            <FaUserCircle /> Usuario:
+          </label>
           <select
             id="user"
             value={selectedUser}
@@ -141,8 +198,11 @@ const DepositForm = () => {
             ))}
           </select>
         </div>
+
         <div className="form-group">
-          <label htmlFor="action">Acción:</label>
+          <label htmlFor="action">
+            <FaExchangeAlt /> Acción:
+          </label>
           <select
             id="action"
             value={action}
@@ -153,8 +213,11 @@ const DepositForm = () => {
             <option value="withdraw">Retirar</option>
           </select>
         </div>
+
         <div className="form-group">
-          <label htmlFor="amount">Cantidad (EUR):</label>
+          <label htmlFor="amount">
+            <FaMoneyBillWave /> Cantidad (EUR):
+          </label>
           <input
             type="number"
             id="amount"
@@ -165,34 +228,76 @@ const DepositForm = () => {
             step="0.01"
           />
           {eurToUSDT && amount && (
-            <p>Equivalente en USDT: {(amount / eurToUSDT).toFixed(2)} USDT</p>
+            <div className="usdt-equivalent">
+              Equivalente en USDT: {(amount / eurToUSDT).toFixed(2)} USDT
+            </div>
           )}
         </div>
-        <button type="submit">
-          {action === "deposit" ? "Realizar Depósito" : "Realizar Retiro"}
-        </button>
-      </form>
-      {transactions.length > 0 && (
-        <div className="transaction-history">
-          <h3>Historial de Transacciones</h3>
-          <ul>
-            {transactions.map((transaction) => (
-              <li
-                key={transaction._id}
-                className={
-                  transaction.type === "deposit" ? "deposit" : "withdraw"
-                }
-              >
-                {transaction.type === "deposit" ? "Depósito" : "Retiro"} de{" "}
-                {transaction.amountEUR.toFixed(2)} EUR (
-                {transaction.amountUSDT.toFixed(2)} USDT) -{" "}
-                {new Date(transaction.date).toLocaleString()}
-              </li>
-            ))}
-          </ul>
-        </div>
-      )}
-    </div>
+
+        <motion.button
+          whileHover={{ scale: 1.02 }}
+          whileTap={{ scale: 0.98 }}
+          className="submit-button"
+          type="submit"
+          disabled={loading}
+        >
+          {action === "deposit" ? (
+            <>
+              <FaArrowUp /> Realizar Depósito
+            </>
+          ) : (
+            <>
+              <FaArrowDown /> Realizar Retiro
+            </>
+          )}
+        </motion.button>
+      </motion.form>
+
+      <AnimatePresence>
+        {transactions.length > 0 && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -20 }}
+            className="transaction-history"
+          >
+            <h3>
+              <FaHistory /> Historial de Transacciones
+            </h3>
+            <div className="transaction-list">
+              {transactions.map((transaction, index) => (
+                <motion.div
+                  key={transaction._id}
+                  initial={{ opacity: 0, x: -20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: index * 0.1 }}
+                  className="transaction-item"
+                >
+                  <div className="transaction-info">
+                    <span className={`transaction-type ${transaction.type}`}>
+                      {transaction.type === "deposit" ? (
+                        <FaArrowUp />
+                      ) : (
+                        <FaArrowDown />
+                      )}
+                      {transaction.type === "deposit" ? "Depósito" : "Retiro"}
+                    </span>
+                    <span className="transaction-amount">
+                      {transaction.amountEUR.toFixed(2)} EUR (
+                      {transaction.amountUSDT.toFixed(2)} USDT)
+                    </span>
+                  </div>
+                  <span className="transaction-date">
+                    <FaCalendarAlt />{" "}
+                    {new Date(transaction.date).toLocaleString()}
+                  </span>
+                </motion.div>
+              ))}
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </motion.div>
   );
 };
 

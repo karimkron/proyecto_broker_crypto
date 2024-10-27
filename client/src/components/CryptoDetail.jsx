@@ -241,7 +241,7 @@ const CryptoDetail = () => {
               {simulatedOrders.map((order, index) => (
                 <tr key={index}>
                   <td>{order.time}</td>
-                  <td 
+                  <td
                     className={
                       order.direction === "Compra" ? "positive" : "negative"
                     }

@@ -23,13 +23,26 @@
   align-items: center;
 }
 
+.header-content {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
 .profile-header h1 {
-  font-size: 1.5rem;
+  font-size: 1.75rem;
   font-weight: 700;
   margin: 0;
   background: linear-gradient(135deg, #4834d4 0%, #686de0 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
+}
+
+.header-subtitle {
+  font-size: 1rem;
+  color: rgba(255, 255, 255, 0.7);
+  margin: 0;
+  font-weight: 500;
 }
 
 .logout-button {
@@ -91,10 +104,18 @@
   min-width: 24px;
 }
 
+.info-item div {
+  flex: 1;
+  min-width: 0;
+}
+
 .info-item p {
   margin: 0;
   font-size: 0.875rem;
   color: rgba(255, 255, 255, 0.9);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .info-item strong {
@@ -130,6 +151,10 @@
   transform: translateY(-2px);
 }
 
+.action-button:active {
+  transform: translateY(0);
+}
+
 .action-button .icon {
   font-size: 1.25rem;
   color: #4834d4;
@@ -155,6 +180,19 @@
   font-size: 1.25rem;
 }
 
+.loading-icon {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
 .error {
   background: rgba(231, 76, 60, 0.2);
   border: 1px solid rgba(231, 76, 60, 0.4);
@@ -166,24 +204,36 @@
 }
 
 /* Estados especiales */
-.verified-badge {
-  background: rgba(46, 204, 113, 0.2);
-  border: 1px solid rgba(46, 204, 113, 0.4);
-  color: #2ecc71;
+.verified-badge,
+.level-badge {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
   padding: 0.25rem 0.5rem;
   border-radius: 8px;
   font-size: 0.75rem;
   font-weight: 600;
+  margin-left: auto;
+  white-space: nowrap;
+}
+
+.verified-badge {
+  background: rgba(46, 204, 113, 0.2);
+  border: 1px solid rgba(46, 204, 113, 0.4);
+  color: #2ecc71;
 }
 
 .level-badge {
   background: rgba(72, 52, 212, 0.2);
   border: 1px solid rgba(72, 52, 212, 0.4);
   color: #4834d4;
-  padding: 0.25rem 0.5rem;
-  border-radius: 8px;
-  font-size: 0.75rem;
-  font-weight: 600;
+}
+
+/* Responsive */
+@media (max-width: 1024px) {
+  .profile-content {
+    grid-template-columns: 1fr;
+  }
 }
 
 @media (max-width: 768px) {
@@ -196,11 +246,21 @@
   }
 
   .profile-header h1 {
-    font-size: 1.25rem;
+    font-size: 1.5rem;
+  }
+
+  .header-subtitle {
+    font-size: 0.875rem;
   }
 
   .info-item {
     padding: 0.75rem;
+  }
+
+  .verified-badge,
+  .level-badge {
+    font-size: 0.7rem;
+    padding: 0.2rem 0.4rem;
   }
 }
 
@@ -211,7 +271,26 @@
     align-items: flex-start;
   }
 
+  .header-content {
+    width: 100%;
+  }
+
+  .profile-header h1 {
+    font-size: 1.25rem;
+  }
+
   .logout-button {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .info-item {
+    flex-wrap: wrap;
+  }
+
+  .verified-badge,
+  .level-badge {
+    margin: 0.5rem 0 0;
     width: 100%;
     justify-content: center;
   }
@@ -233,4 +312,33 @@
 
 .profile-container::-webkit-scrollbar-thumb:hover {
   background: rgba(72, 52, 212, 0.7);
+}
+
+/* Optimizaciones de rendimiento */
+@media (prefers-reduced-motion: reduce) {
+  .info-item,
+  .action-button,
+  .logout-button {
+    transition: none;
+  }
+
+  .loading-icon {
+    animation: none;
+  }
+}
+
+/* Soporte para modo oscuro del sistema */
+@media (prefers-color-scheme: dark) {
+  .profile-container {
+    color: #ffffff;
+  }
+}
+
+/* Soporte para navegadores sin backdrop-filter */
+@supports not (backdrop-filter: blur(10px)) {
+  .profile-header,
+  .profile-info,
+  .profile-forms {
+    background: rgba(255, 255, 255, 0.15);
+  }
 }

@@ -1,10 +1,22 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { motion } from "framer-motion";
+import {
+  FaUser,
+  FaEnvelope,
+  FaLock,
+  FaKey,
+  FaUserCircle,
+  FaIdCard,
+} from "react-icons/fa";
 import "../styles/components/auth.css";
 
 const Register = () => {
   const navigate = useNavigate();
   const [formData, setFormData] = useState({
+    username: "",
+    firstName: "",
+    lastName: "",
     email: "",
     password: "",
     confirmPassword: "",
@@ -13,7 +25,15 @@ const Register = () => {
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
 
-  const { email, password, confirmPassword, invitationCode } = formData;
+  const {
+    username,
+    firstName,
+    lastName,
+    email,
+    password,
+    confirmPassword,
+    invitationCode,
+  } = formData;
 
   const onChange = (e) =>
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -34,7 +54,14 @@ const Register = () => {
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ email, password, invitationCode }),
+        body: JSON.stringify({
+          username,
+          firstName,
+          lastName,
+          email,
+          password,
+          invitationCode,
+        }),
       });
 
       const data = await response.json();
@@ -56,91 +83,164 @@ const Register = () => {
   };
 
   return (
-    <div className="auth-container">
-      <div className="auth-card">
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      className="auth-container"
+    >
+      <motion.div initial={{ y: -20 }} animate={{ y: 0 }} className="auth-card">
         <div className="auth-header">
           <h2>Coin Switch</h2>
           <p>Crea tu cuenta</p>
         </div>
 
         {message && (
-          <div
+          <motion.div
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
             className={`auth-message ${
               message.includes("exitoso") ? "success" : "error"
             }`}
           >
             {message}
-          </div>
+          </motion.div>
         )}
 
         <form onSubmit={onSubmit} className="auth-form">
           <div className="form-group">
-            <input
-              className="auth-input"
-              type="email"
-              placeholder="Su correo electrónico"
-              name="email"
-              value={email}
-              onChange={onChange}
-              required
-            />
+            <div className="input-icon-wrapper">
+              <FaUserCircle className="input-icon" />
+              <input
+                className="auth-input"
+                type="text"
+                placeholder="     Nombre de usuario"
+                name="username"
+                value={username}
+                onChange={onChange}
+                required
+              />
+            </div>
           </div>
 
           <div className="form-group">
-            <input
-              className="auth-input"
-              type="password"
-              placeholder="Longitud de contraseña 6 ~ 30"
-              name="password"
-              value={password}
-              onChange={onChange}
-              minLength="6"
-              maxLength="30"
-              required
-            />
+            <div className="input-icon-wrapper">
+              <FaIdCard className="input-icon" />
+              <input
+                className="auth-input"
+                type="text"
+                placeholder="     Nombre"
+                name="firstName"
+                value={firstName}
+                onChange={onChange}
+                required
+              />
+            </div>
           </div>
 
           <div className="form-group">
-            <input
-              className="auth-input"
-              type="password"
-              placeholder="Ingrese para confirmar la contraseña"
-              name="confirmPassword"
-              value={confirmPassword}
-              onChange={onChange}
-              minLength="6"
-              maxLength="30"
-              required
-            />
+            <div className="input-icon-wrapper">
+              <FaIdCard className="input-icon" />
+              <input
+                className="auth-input"
+                type="text"
+                placeholder="     Apellido"
+                name="lastName"
+                value={lastName}
+                onChange={onChange}
+                required
+              />
+            </div>
           </div>
 
           <div className="form-group">
-            <input
-              className="auth-input"
-              type="text"
-              placeholder="Ingrese el código de invitación"
-              name="invitationCode"
-              value={invitationCode}
-              onChange={onChange}
-              required
-            />
+            <div className="input-icon-wrapper">
+              <FaEnvelope className="input-icon" />
+              <input
+                className="auth-input"
+                type="email"
+                placeholder="     Su correo electrónico"
+                name="email"
+                value={email}
+                onChange={onChange}
+                required
+              />
+            </div>
           </div>
 
-          <button type="submit" className="auth-button" disabled={loading}>
+          <div className="form-group">
+            <div className="input-icon-wrapper">
+              <FaLock className="input-icon" />
+              <input
+                className="auth-input"
+                type="password"
+                placeholder="     Longitud de contraseña 6 ~ 30"
+                name="password"
+                value={password}
+                onChange={onChange}
+                minLength="6"
+                maxLength="30"
+                required
+              />
+            </div>
+          </div>
+
+          <div className="form-group">
+            <div className="input-icon-wrapper">
+              <FaLock className="input-icon" />
+              <input
+                className="auth-input"
+                type="password"
+                placeholder="     Ingrese para confirmar la contraseña"
+                name="confirmPassword"
+                value={confirmPassword}
+                onChange={onChange}
+                minLength="6"
+                maxLength="30"
+                required
+              />
+            </div>
+          </div>
+
+          <div className="form-group">
+            <div className="input-icon-wrapper">
+              <FaKey className="input-icon" />
+              <input
+                className="auth-input"
+                type="text"
+                placeholder="     Ingrese el código de invitación"
+                name="invitationCode"
+                value={invitationCode}
+                onChange={onChange}
+                required
+              />
+            </div>
+          </div>
+
+          <motion.button
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
+            type="submit"
+            className="auth-button"
+            disabled={loading}
+          >
             {loading ? "Registrando..." : "Registrarse"}
-          </button>
+          </motion.button>
         </form>
 
         <div className="auth-footer">
           <p>
             ¿Ya tienes una cuenta?{" "}
-            <a href="/login" className="auth-link">
+            <motion.a
+              whileHover={{ scale: 1.05 }}
+              href="/login"
+              className="auth-link"
+            >
               Iniciar sesión
-            </a>
+            </motion.a>
           </p>
         </div>
-      </div>
-    </div>
+      </motion.div>
+    </motion.div>
   );
 };
 

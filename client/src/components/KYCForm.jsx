@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import "../styles/pages/KYCForm.css";
 
 const KYCForm = () => {
   const [formData, setFormData] = useState({
@@ -120,7 +121,9 @@ const KYCForm = () => {
           required
         />
 
-        <button type="submit">Enviar información KYC</button>
+        <button type="submit" className="btn-submit">
+          Enviar información KYC
+        </button>
       </form>
     </div>
   );

@@ -106,7 +106,9 @@ const Profile = ({ setIsAuthenticated }) => {
         animate={{ y: 0 }}
         className="profile-header"
       >
-        <h1>Perfil del Trader</h1>
+        <div className="header-content">
+          <h1>¡Hola de nuevo, {user?.firstName}!</h1>
+        </div>
         <motion.button
           whileHover={{ scale: 1.05 }}
           whileTap={{ scale: 0.95 }}
@@ -127,12 +129,20 @@ const Profile = ({ setIsAuthenticated }) => {
             <motion.div className="info-item">
               <FaUser className="icon" />
               <div>
-                <strong>Usuario</strong>
-                <p>{user.email.split("@")[0]}</p>
+                <strong>Nombre Completo</strong>
+                <p>{`${user.firstName} ${user.lastName}`}</p>
               </div>
               <span className="verified-badge">
                 <FaCheckCircle /> Verificado
               </span>
+            </motion.div>
+
+            <motion.div className="info-item">
+              <FaUser className="icon" />
+              <div>
+                <strong>Usuario</strong>
+                <p>{user.email.split("@")[0]}</p>
+              </div>
             </motion.div>
 
             <motion.div className="info-item">

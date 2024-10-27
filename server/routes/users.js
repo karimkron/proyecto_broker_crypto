@@ -10,25 +10,33 @@ const InvitationCode = require("../models/InvitationCode");
 // @desc    Register user
 // @access  Public
 router.post("/", async (req, res) => {
-  const { email, password, invitationCode } = req.body;
+  const { firstName, lastName, username, email, password, invitationCode } =
+    req.body;
 
   try {
-    let user = await User.findOne({ email });
+    let userExists = await User.findOne({
+      $or: [{ email }, { username }],
+    });
 
-    if (user) {
-      return res.status(400).json({ msg: "El usuario ya existe" });
+    if (userExists) {
+      return res.status(400).json({ msg: "El usuario o email ya existe" });
     }
+
     const validCode = await InvitationCode.findOne({
       code: invitationCode,
       isUsed: false,
     });
+
     if (!validCode) {
       return res
         .status(400)
         .json({ msg: "Código de invitación inválido o ya utilizado" });
     }
 
-    user = new User({
+    const user = new User({
+      firstName,
+      lastName,
+      username,
       email,
       password,
       invitationCode,
@@ -86,7 +94,7 @@ router.post("/login", async (req, res) => {
     const payload = {
       user: {
         id: user.id,
-        role: user.role, // Añade el rol al payload
+        role: user.role,
       },
     };
 
@@ -96,7 +104,16 @@ router.post("/login", async (req, res) => {
       { expiresIn: 3600 },
       (err, token) => {
         if (err) throw err;
-        res.json({ token, role: user.role }); // Devuelve el rol junto con el token
+        res.json({
+          token,
+          role: user.role,
+          user: {
+            firstName: user.firstName,
+            lastName: user.lastName,
+            username: user.username,
+            email: user.email,
+          },
+        });
       }
     );
   } catch (err) {
@@ -110,7 +127,9 @@ router.post("/login", async (req, res) => {
 // @access  Private
 router.get("/me", auth, async (req, res) => {
   try {
-    const user = await User.findById(req.user.id).select("-password");
+    const user = await User.findById(req.user.id)
+      .select("-password")
+      .select("-transactions");
     res.json(user);
   } catch (err) {
     console.error(err.message);
@@ -169,4 +188,5 @@ router.get("/profit-percentages", auth, async (req, res) => {
     res.status(500).send("Error del servidor");
   }
 });
+
 module.exports = router;

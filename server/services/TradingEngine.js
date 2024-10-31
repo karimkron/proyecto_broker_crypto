@@ -2,9 +2,19 @@ const User = require("../models/User");
 const Order = require("../models/Order");
 
 class TradingEngine {
-  static async processOrder(userId, cryptoSymbol, amount, duration, io) {
+  static async processOrder(
+    userId,
+    cryptoSymbol,
+    orderType,
+    amount,
+    duration,
+    initialPrice,
+    profitPercentage,
+    io
+  ) {
     try {
       const user = await User.findById(userId);
+
       if (!user) {
         throw new Error("Usuario no encontrado");
       }
@@ -13,21 +23,53 @@ class TradingEngine {
         throw new Error("Saldo insuficiente");
       }
 
-      const percentage = user.tradingPercentages[duration];
-      if (!percentage) {
-        throw new Error("Duración de trading inválida");
-      }
+      const willProfit = user.allowProfits;
 
-      const estimatedProfit = amount * (percentage / 100);
+      // Función para calcular la variación del precio según el tipo de cripto
+      const calculatePriceVariation = (symbol, initialPrice, isProfit) => {
+        // Para Bitcoin (variación entre 300-1000 USDT)
+        if (symbol.toLowerCase() === "btc") {
+          const variation = isProfit
+            ? Math.random() * 1200 + 300 // 300-1000 USDT para ganancia
+            : -(Math.random() * 1200 + 300); // -300 a -1000 USDT para pérdida
+          return variation;
+        }
+        // Para criptos de bajo valor (como DOGE, variación en centavos)
+        else if (initialPrice < 1) {
+          const variation = isProfit
+            ? Math.random() * 0.02 + 0.01 // 0.01-0.03 USDT para ganancia
+            : -(Math.random() * 0.02 + 0.01); // -0.01 a -0.03 USDT para pérdida
+          return variation;
+        }
+        // Para otras criptos (variación del 0.1% - 0.5%)
+        else {
+          const percentVariation = (Math.random() * 0.7 + 0.1) / 100; // 0.1% - 0.5%
+          return (
+            initialPrice * (isProfit ? percentVariation : -percentVariation)
+          );
+        }
+      };
+
+      // Calcular el precio final con variación realista
+      const priceVariation = calculatePriceVariation(
+        cryptoSymbol,
+        initialPrice,
+        willProfit
+      );
+      const targetPrice = initialPrice + priceVariation;
 
       // Crear la orden
       const order = new Order({
         user: userId,
         cryptoSymbol,
+        orderType,
         amount,
         duration,
-        estimatedProfit,
+        initialPrice,
+        targetPrice,
+        profitPercentage,
         status: "en progreso",
+        willProfit: user.allowProfits,
       });
 
       await order.save();
@@ -36,48 +78,58 @@ class TradingEngine {
       user.balanceUSDT -= amount;
       await user.save();
 
-      // Simular el proceso de trading
+      // Simulación del proceso de trading
       const startTime = Date.now();
       const endTime = startTime + this.getDurationInMilliseconds(duration);
-      const intervalTime = 1000; // Actualizar cada segundo
+      const intervalTime = 100;
 
       const interval = setInterval(async () => {
         const currentTime = Date.now();
-        const progress = Math.min(
-          (currentTime - startTime) / (endTime - startTime),
-          1
-        );
-        const currentProfit = estimatedProfit * progress;
-
-        // Emitir actualización del progreso
-        if (io) {
-          io.to(userId.toString()).emit("orderUpdate", {
-            orderId: order._id,
-            progress,
-            currentProfit,
-          });
-        }
+        const progress = (currentTime - startTime) / (endTime - startTime);
 
         if (currentTime >= endTime) {
           clearInterval(interval);
 
-          // Calcular la ganancia final (puede variar ligeramente de la estimada)
-          const finalProfit = estimatedProfit * (0.9 + Math.random() * 0.2); // ±10% de variación
+          // Calcular resultado basado en el porcentaje seleccionado, no en el movimiento del precio
+          let result;
+          if (willProfit) {
+            result = (amount * profitPercentage) / 100;
+          } else {
+            result = -amount; // Pérdida total en caso de willProfit false
+          }
 
-          // Actualizar la orden y el balance del usuario
+          // Actualizar la orden
           order.status = "completada";
-          order.finalProfit = finalProfit;
+          order.finalPrice = targetPrice;
+          order.result = result;
           order.completedAt = new Date();
           await order.save();
 
-          user.balanceUSDT += amount + finalProfit;
+          // Actualizar balance del usuario
+          if (willProfit) {
+            user.balanceUSDT += amount + result;
+          }
           await user.save();
 
-          // Emitir actualización final
           if (io) {
             io.to(userId.toString()).emit("orderComplete", {
               orderId: order._id,
-              finalProfit,
+              finalPrice: targetPrice,
+              result,
+            });
+          }
+        } else {
+          // Generar precio actual con pequeñas variaciones
+          const progressPrice = initialPrice + priceVariation * progress;
+          // Añadir pequeño ruido al precio
+          const noise = initialPrice * (Math.random() - 0.5) * 0.0001; // ±0.01%
+          const currentPrice = progressPrice + noise;
+
+          if (io) {
+            io.to(userId.toString()).emit("orderUpdate", {
+              orderId: order._id,
+              currentPrice,
+              progress,
             });
           }
         }
@@ -85,7 +137,7 @@ class TradingEngine {
 
       return order;
     } catch (error) {
-      console.error("Error en el proceso de trading:", error);
+      console.error("Error en TradingEngine.processOrder:", error);
       throw error;
     }
   }
@@ -96,20 +148,7 @@ class TradingEngine {
       "60S": 60 * 1000,
       "120S": 120 * 1000,
     };
-    return durationMap[duration] || 30 * 1000; // default to 30 seconds if invalid duration
-  }
-
-  static async getOrderStatus(orderId) {
-    try {
-      const order = await Order.findById(orderId);
-      if (!order) {
-        throw new Error("Orden no encontrada");
-      }
-      return order;
-    } catch (error) {
-      console.error("Error al obtener el estado de la orden:", error);
-      throw error;
-    }
+    return durationMap[duration] || 30 * 1000;
   }
 }
 

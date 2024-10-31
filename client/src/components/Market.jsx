@@ -1,7 +1,11 @@
 import React, { useState, useEffect } from "react";
+
 import axios from "axios";
+
 import { useNavigate } from "react-router-dom";
+
 import { motion, AnimatePresence } from "framer-motion";
+
 import {
   FaWallet,
   FaExchangeAlt,
@@ -12,25 +16,73 @@ import {
   FaPhoneAlt,
   FaArrowDown as FaDeposit,
 } from "react-icons/fa";
+
 import "../styles/pages/market.css";
 
 const Market = () => {
   const [cryptocurrencies, setCryptocurrencies] = useState([]);
+
   const [loading, setLoading] = useState(true);
+
   const [error, setError] = useState(null);
+
+  const [priceVariations, setPriceVariations] = useState({});
+
   const navigate = useNavigate();
+
+  // Función para generar variación de precio aleatoria
+
+  const generatePriceVariation = (basePrice) => {
+    const variation = (Math.random() - 0.5) * 0.0001; // Genera una variación pequeña
+
+    return basePrice + variation;
+  };
+
+  // Efecto para actualizar las variaciones de precio
+
+  useEffect(() => {
+    if (cryptocurrencies.length > 0) {
+      const variations = {};
+
+      cryptocurrencies.forEach((crypto) => {
+        variations[crypto.id] = crypto.current_price;
+      });
+
+      setPriceVariations(variations);
+
+      const interval = setInterval(() => {
+        setPriceVariations((prev) => {
+          const newVariations = { ...prev };
+
+          Object.keys(newVariations).forEach((cryptoId) => {
+            newVariations[cryptoId] = generatePriceVariation(
+              newVariations[cryptoId]
+            );
+          });
+
+          return newVariations;
+        });
+      }, 100); // Actualiza cada 100ms
+
+      return () => clearInterval(interval);
+    }
+  }, [cryptocurrencies]);
 
   useEffect(() => {
     const fetchCryptoPrices = async () => {
       try {
         setLoading(true);
+
         setError(null);
+
         const response = await axios.get(
           "http://localhost:5000/api/crypto-data"
         );
+
         setCryptocurrencies(response.data);
       } catch (error) {
         console.error("Error fetching crypto data:", error);
+
         setError(
           "No se pudo cargar la información de las criptomonedas. Por favor, intenta de nuevo más tarde."
         );
@@ -40,12 +92,20 @@ const Market = () => {
     };
 
     fetchCryptoPrices();
+
     const interval = setInterval(fetchCryptoPrices, 60000);
+
     return () => clearInterval(interval);
   }, []);
 
   const handleCryptoSelect = (crypto) => {
     navigate(`/crypto/${crypto.id}`);
+  };
+
+  const formatPrice = (price) => {
+    if (typeof price !== "number") return "0.0000";
+
+    return price.toFixed(4);
   };
 
   if (loading)
@@ -75,6 +135,7 @@ const Market = () => {
       className="market-container"
     >
       {/* Top Cryptos Section */}
+
       <motion.div
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -98,13 +159,15 @@ const Market = () => {
             >
               {crypto.symbol.toUpperCase()}/USDT
             </motion.div>
+
             <motion.div
               className="crypto-price"
               initial={{ scale: 0.5 }}
               animate={{ scale: 1 }}
             >
-              ${crypto.current_price.toFixed(2)}
+              ${formatPrice(priceVariations[crypto.id] || crypto.current_price)}
             </motion.div>
+
             <motion.div
               className={`crypto-change ${
                 crypto.price_change_percentage_24h > 0 ? "positive" : "negative"
@@ -122,6 +185,7 @@ const Market = () => {
       </motion.div>
 
       {/* Quick Actions */}
+
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -135,6 +199,7 @@ const Market = () => {
         >
           <div className="button-content">
             <FaDeposit className="action-icon" />
+
             <span>Depositar</span>
           </div>
         </motion.button>
@@ -146,6 +211,7 @@ const Market = () => {
         >
           <div className="button-content">
             <FaExchangeAlt className="action-icon" />
+
             <span>Retirar</span>
           </div>
         </motion.button>
@@ -157,12 +223,14 @@ const Market = () => {
         >
           <div className="button-content">
             <FaPhoneAlt className="action-icon" />
+
             <span>Soporte</span>
           </div>
         </motion.button>
       </motion.div>
 
       {/* Crypto List */}
+
       <motion.div
         className="crypto-list"
         initial={{ opacity: 0 }}
@@ -188,13 +256,19 @@ const Market = () => {
                 whileHover={{ scale: 1.1 }}
                 whileTap={{ scale: 0.9 }}
               />
+
               <div className="crypto-info">
                 <div className="crypto-symbol">
                   {crypto.symbol.toUpperCase()}/USDT
                 </div>
+
                 <div className="crypto-price">
-                  ${crypto.current_price.toFixed(2)}
+                  $
+                  {formatPrice(
+                    priceVariations[crypto.id] || crypto.current_price
+                  )}
                 </div>
+
                 <motion.div
                   className={`crypto-change ${
                     crypto.price_change_percentage_24h > 0

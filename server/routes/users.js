@@ -85,6 +85,13 @@ router.post("/login", async (req, res) => {
       return res.status(400).json({ msg: "Credenciales inválidas" });
     }
 
+    if (user.isBlocked) {
+      return res.status(403).json({
+        msg: "Su cuenta ha sido bloqueada. Por favor, contacte con el administrador",
+        error: "ACCOUNT_BLOCKED",
+      });
+    }
+
     const isMatch = await bcrypt.compare(password, user.password);
 
     if (!isMatch) {
@@ -137,29 +144,53 @@ router.get("/me", auth, async (req, res) => {
   }
 });
 
-// @route   POST api/users/change-password
+// @route   PUT api/users/change-password
 // @desc    Change user password
 // @access  Private
-router.post("/change-password", auth, async (req, res) => {
+router.put("/change-password", auth, async (req, res) => {
   const { currentPassword, newPassword } = req.body;
 
   try {
-    const user = await User.findById(req.user.id);
-
-    const isMatch = await bcrypt.compare(currentPassword, user.password);
-    if (!isMatch) {
-      return res.status(400).json({ msg: "Contraseña actual incorrecta" });
+    // Validaciones
+    if (!currentPassword || !newPassword) {
+      return res.status(400).json({
+        msg: "Se requieren la contraseña actual y la nueva contraseña",
+      });
     }
 
+    if (newPassword.length < 6) {
+      return res.status(400).json({
+        msg: "La nueva contraseña debe tener al menos 6 caracteres",
+      });
+    }
+
+    const user = await User.findById(req.user.id);
+
+    // Verificar contraseña actual
+    const isMatch = await bcrypt.compare(currentPassword, user.password);
+    if (!isMatch) {
+      return res
+        .status(400)
+        .json({ msg: "La contraseña actual es incorrecta" });
+    }
+
+    // Verificar que la nueva contraseña sea diferente a la actual
+    const isSamePassword = await bcrypt.compare(newPassword, user.password);
+    if (isSamePassword) {
+      return res.status(400).json({
+        msg: "La nueva contraseña debe ser diferente a la actual",
+      });
+    }
+
+    // Encriptar y guardar nueva contraseña
     const salt = await bcrypt.genSalt(10);
     user.password = await bcrypt.hash(newPassword, salt);
-
     await user.save();
 
-    res.json({ msg: "Contraseña cambiada exitosamente" });
+    res.json({ msg: "Contraseña actualizada con éxito" });
   } catch (err) {
-    console.error(err.message);
-    res.status(500).send("Error del servidor");
+    console.error("Error al cambiar la contraseña:", err);
+    res.status(500).json({ msg: "Error del servidor" });
   }
 });
 

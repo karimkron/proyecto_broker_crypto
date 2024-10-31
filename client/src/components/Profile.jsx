@@ -1,113 +1,691 @@
 import React, { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
-import { motion, AnimatePresence } from "framer-motion";
-import ChangePassword from "./ChangePassword";
-import KYCForm from "./KYCForm";
 import {
   FaUser,
   FaEnvelope,
-  FaCalendar,
-  FaLock,
   FaIdCard,
-  FaSignOutAlt,
-  FaChartLine,
+  FaCalendarAlt,
   FaCheckCircle,
-  FaMedal,
-  FaHistory,
   FaClock,
+  FaTimesCircle,
+  FaSpinner,
+  FaSignOutAlt,
+  FaLock,
+  FaEye,
+  FaEyeSlash,
+  FaShieldAlt,
+  FaUserCheck,
+  FaPhone,
 } from "react-icons/fa";
-import "../styles/pages/Profile.css";
+import { motion, AnimatePresence } from "framer-motion";
+import axios from "axios";
+import "../styles/pages/profile.css";
 
-const Profile = ({ setIsAuthenticated }) => {
+const Profile = () => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
-  const [showChangePassword, setShowChangePassword] = useState(false);
-  const [showKYCForm, setShowKYCForm] = useState(false);
-  const navigate = useNavigate();
+  const [error, setError] = useState(null);
+  const [showPasswordModal, setShowPasswordModal] = useState(false);
+  const [showKycForm, setShowKycForm] = useState(false);
+  const [passwordForm, setPasswordForm] = useState({
+    currentPassword: "",
+    newPassword: "",
+    confirmPassword: "",
+  });
+  const [showPasswords, setShowPasswords] = useState({
+    current: false,
+    new: false,
+    confirm: false,
+  });
+  const [kycFormData, setKycFormData] = useState({
+    fullName: "",
+    dateOfBirth: "",
+    address: "",
+    idNumber: "",
+    phoneNumber: "",
+    frontId: null,
+    backId: null,
+    selfieWithId: null,
+    addressProof: null,
+  });
+
+  const [validation, setValidation] = useState({
+    fullName: false,
+    dateOfBirth: false,
+    address: false,
+    idNumber: false,
+    phoneNumber: false,
+    frontId: false,
+    backId: false,
+    selfieWithId: false,
+    addressProof: false,
+  });
 
   useEffect(() => {
-    const fetchUserData = async () => {
-      const token = localStorage.getItem("token");
-      if (!token) {
-        navigate("/login");
-        return;
-      }
-
-      try {
-        const response = await fetch("http://localhost:5000/api/users/me", {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        });
-        if (response.ok) {
-          const userData = await response.json();
-          setUser(userData);
-        } else {
-          throw new Error("Failed to fetch user data");
-        }
-      } catch (err) {
-        setError("Error al cargar los datos del usuario");
-        console.error(err);
-      } finally {
-        setLoading(false);
-      }
-    };
-
     fetchUserData();
-  }, [navigate]);
+  }, []);
+
+  const fetchUserData = async () => {
+    try {
+      setLoading(true);
+      const token = localStorage.getItem("token");
+
+      const [userResponse, kycResponse] = await Promise.all([
+        axios.get("http://localhost:5000/api/users/me", {
+          headers: { Authorization: `Bearer ${token}` },
+        }),
+        axios.get("http://localhost:5000/api/kyc/status", {
+          headers: { Authorization: `Bearer ${token}` },
+        }),
+      ]);
+
+      setUser({
+        ...userResponse.data,
+        kycStatus: kycResponse.data.kycStatus,
+        kycSubmissionDate: kycResponse.data.kycSubmissionDate,
+        kycVerificationDate: kycResponse.data.kycVerificationDate,
+        kycRejectionReason: kycResponse.data.kycRejectionReason,
+      });
+
+      setError(null);
+    } catch (error) {
+      console.error("Error fetching user data:", error);
+      setError(
+        error.response?.data?.msg || "Error al cargar los datos del usuario"
+      );
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleInputChange = (field, value) => {
+    setKycFormData((prev) => ({ ...prev, [field]: value }));
+
+    let isValid = false;
+    switch (field) {
+      case "fullName":
+        isValid = value.trim().length >= 3;
+        break;
+      case "phoneNumber":
+        isValid = /^\+?\d{9,15}$/.test(value);
+        break;
+      case "idNumber":
+        // Validación para DNI/NIE español
+        isValid = /^[0-9XYZ][0-9]{7}[A-Z]$/.test(value.toUpperCase());
+        break;
+      case "address":
+        isValid = value.trim().length >= 5;
+        break;
+      case "dateOfBirth":
+        const birthDate = new Date(value);
+        const today = new Date();
+        const age = today.getFullYear() - birthDate.getFullYear();
+        isValid = age >= 18 && age <= 120;
+        break;
+      default:
+        isValid = !!value;
+    }
+
+    setValidation((prev) => ({ ...prev, [field]: isValid }));
+  };
+
+  const handleFileChange = (field, file) => {
+    if (file) {
+      const isValidFile = validateFile(file);
+      setKycFormData((prev) => ({
+        ...prev,
+        [field]: isValidFile ? file : null,
+      }));
+      setValidation((prev) => ({ ...prev, [field]: isValidFile }));
+    }
+  };
+
+  const validateFile = (file) => {
+    const maxSize = 5 * 1024 * 1024; // 5MB
+    const validTypes = [
+      "image/jpeg",
+      "image/png",
+      "image/jpg",
+      "application/pdf",
+    ];
+    return file.size <= maxSize && validTypes.includes(file.type);
+  };
+
+  const handleKYCSubmit = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+
+    try {
+      const formData = new FormData();
+      Object.keys(kycFormData).forEach((key) => {
+        if (kycFormData[key]) {
+          formData.append(key, kycFormData[key]);
+        }
+      });
+
+      const token = localStorage.getItem("token");
+      await axios.post("http://localhost:5000/api/kyc", formData, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "multipart/form-data",
+        },
+      });
+
+      await fetchUserData();
+      setShowKycForm(false);
+
+      // Reset form
+      setKycFormData({
+        fullName: "",
+        dateOfBirth: "",
+        address: "",
+        idNumber: "",
+        phoneNumber: "",
+        frontId: null,
+        backId: null,
+        selfieWithId: null,
+        addressProof: null,
+      });
+      setValidation({
+        fullName: false,
+        dateOfBirth: false,
+        address: false,
+        idNumber: false,
+        phoneNumber: false,
+        frontId: false,
+        backId: false,
+        selfieWithId: false,
+        addressProof: false,
+      });
+    } catch (error) {
+      setError(
+        error.response?.data?.msg || "Error al enviar documentación KYC"
+      );
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handlePasswordChange = async (e) => {
+    e.preventDefault();
+
+    if (passwordForm.newPassword !== passwordForm.confirmPassword) {
+      setError("Las contraseñas nuevas no coinciden");
+      return;
+    }
+
+    try {
+      setLoading(true);
+      const token = localStorage.getItem("token");
+
+      await axios.put(
+        "http://localhost:5000/api/users/change-password",
+        {
+          currentPassword: passwordForm.currentPassword,
+          newPassword: passwordForm.newPassword,
+        },
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+
+      setPasswordForm({
+        currentPassword: "",
+        newPassword: "",
+        confirmPassword: "",
+      });
+
+      setShowPasswordModal(false);
+      setError(null);
+    } catch (error) {
+      setError(error.response?.data?.msg || "Error al cambiar la contraseña");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const togglePasswordVisibility = (field) => {
+    setShowPasswords((prev) => ({
+      ...prev,
+      [field]: !prev[field],
+    }));
+  };
 
   const handleLogout = () => {
     localStorage.removeItem("token");
-    setIsAuthenticated(false);
-    navigate("/login");
+    window.location.href = "/login";
   };
 
-  const handleChangePassword = () => {
-    setShowChangePassword(!showChangePassword);
-    setShowKYCForm(false);
+  const renderKYCStatus = () => {
+    if (!user) return null;
+
+    const statusConfig = {
+      verified: {
+        icon: <FaUserCheck />,
+        text: "Verificado",
+        className: "verified",
+      },
+      pending: {
+        icon: <FaClock />,
+        text: "Pendiente",
+        className: "pending",
+      },
+      rejected: {
+        icon: <FaTimesCircle />,
+        text: "Rechazado",
+        className: "rejected",
+      },
+      not_submitted: {
+        icon: <FaTimesCircle />,
+        text: "No Verificado",
+        className: "not-verified",
+      },
+    };
+
+    const status = statusConfig[user.kycStatus] || statusConfig.not_submitted;
+
+    return (
+      <span
+        className={`kyc-status ${status.className}`}
+        title={user.kycRejectionReason || status.text}
+      >
+        {status.icon} {status.text}
+      </span>
+    );
   };
 
-  const handleKYC = () => {
-    setShowKYCForm(!showKYCForm);
-    setShowChangePassword(false);
+  const renderPasswordModal = () => {
+    if (!showPasswordModal) return null;
+
+    return (
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        className="modal-overlay"
+      >
+        <motion.div
+          initial={{ scale: 0.9, y: 20 }}
+          animate={{ scale: 1, y: 0 }}
+          exit={{ scale: 0.9, y: 20 }}
+          className="modal-content"
+        >
+          <div className="modal-header">
+            <h3>Cambiar Contraseña</h3>
+            <button
+              className="close-button"
+              onClick={() => setShowPasswordModal(false)}
+            >
+              ×
+            </button>
+          </div>
+
+          <form onSubmit={handlePasswordChange}>
+            <div className="form-group">
+              <label>Contraseña Actual</label>
+              <div className="password-input-wrapper">
+                <input
+                  type={showPasswords.current ? "text" : "password"}
+                  value={passwordForm.currentPassword}
+                  onChange={(e) =>
+                    setPasswordForm({
+                      ...passwordForm,
+                      currentPassword: e.target.value,
+                    })
+                  }
+                  required
+                />
+                <button
+                  type="button"
+                  className="toggle-password"
+                  onClick={() => togglePasswordVisibility("current")}
+                >
+                  {showPasswords.current ? <FaEyeSlash /> : <FaEye />}
+                </button>
+              </div>
+            </div>
+
+            <div className="form-group">
+              <label>Nueva Contraseña</label>
+              <div className="password-input-wrapper">
+                <input
+                  type={showPasswords.new ? "text" : "password"}
+                  value={passwordForm.newPassword}
+                  onChange={(e) =>
+                    setPasswordForm({
+                      ...passwordForm,
+                      newPassword: e.target.value,
+                    })
+                  }
+                  required
+                />
+                <button
+                  type="button"
+                  className="toggle-password"
+                  onClick={() => togglePasswordVisibility("new")}
+                >
+                  {showPasswords.new ? <FaEyeSlash /> : <FaEye />}
+                </button>
+              </div>
+            </div>
+
+            <div className="form-group">
+              <label>Confirmar Nueva Contraseña</label>
+              <div className="password-input-wrapper">
+                <input
+                  type={showPasswords.confirm ? "text" : "password"}
+                  value={passwordForm.confirmPassword}
+                  onChange={(e) =>
+                    setPasswordForm({
+                      ...passwordForm,
+                      confirmPassword: e.target.value,
+                    })
+                  }
+                  required
+                />
+                <button
+                  type="button"
+                  className="toggle-password"
+                  onClick={() => togglePasswordVisibility("confirm")}
+                >
+                  {showPasswords.confirm ? <FaEyeSlash /> : <FaEye />}
+                </button>
+              </div>
+            </div>
+
+            <div className="modal-actions">
+              <button
+                type="submit"
+                className="submit-button"
+                disabled={loading}
+              >
+                {loading ? (
+                  <>
+                    <FaSpinner className="spinning" /> Actualizando...
+                  </>
+                ) : (
+                  "Actualizar Contraseña"
+                )}
+              </button>
+              <button
+                type="button"
+                className="cancel-button"
+                onClick={() => setShowPasswordModal(false)}
+              >
+                Cancelar
+              </button>
+            </div>
+          </form>
+        </motion.div>
+      </motion.div>
+    );
   };
 
-  if (loading)
+  const renderKYCFormModal = () => {
+    if (!showKycForm) return null;
+
+    return (
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        className="modal-overlay"
+      >
+        <motion.div
+          initial={{ scale: 0.9, y: 20 }}
+          animate={{ scale: 1, y: 0 }}
+          exit={{ scale: 0.9, y: 20 }}
+          className="modal-content kyc-modal"
+        >
+          <div className="modal-header">
+            <h3>Verificación KYC</h3>
+            <button
+              className="close-button"
+              onClick={() => setShowKycForm(false)}
+            >
+              ×
+            </button>
+          </div>
+
+          <form onSubmit={handleKYCSubmit} className="kyc-form">
+            <div className="form-group">
+              <label>Nombre Completo</label>
+              <div className="input-wrapper">
+                <input
+                  type="text"
+                  value={kycFormData.fullName}
+                  onChange={(e) =>
+                    handleInputChange("fullName", e.target.value)
+                  }
+                  required
+                />
+                {validation.fullName && (
+                  <FaCheckCircle className="validation-icon success" />
+                )}
+              </div>
+            </div>
+
+            <div className="form-group">
+              <label>Teléfono</label>
+              <div className="input-wrapper">
+                <input
+                  type="tel"
+                  value={kycFormData.phoneNumber}
+                  onChange={(e) =>
+                    handleInputChange("phoneNumber", e.target.value)
+                  }
+                  placeholder="+34 XXX XXX XXX"
+                  required
+                />
+                {validation.phoneNumber && (
+                  <FaCheckCircle className="validation-icon success" />
+                )}
+              </div>
+            </div>
+
+            <div className="form-group">
+              <label>Fecha de Nacimiento</label>
+              <div className="input-wrapper">
+                <input
+                  type="date"
+                  value={kycFormData.dateOfBirth}
+                  onChange={(e) =>
+                    handleInputChange("dateOfBirth", e.target.value)
+                  }
+                  required
+                />
+                {validation.dateOfBirth && (
+                  <FaCheckCircle className="validation-icon success" />
+                )}
+              </div>
+            </div>
+
+            <div className="form-group">
+              <label>Dirección</label>
+              <div className="input-wrapper">
+                <input
+                  type="text"
+                  value={kycFormData.address}
+                  onChange={(e) => handleInputChange("address", e.target.value)}
+                  placeholder="Calle, número, piso, ciudad, código postal"
+                  required
+                />
+                {validation.address && (
+                  <FaCheckCircle className="validation-icon success" />
+                )}
+              </div>
+            </div>
+
+            <div className="form-group">
+              <label>Número de DNI/NIE</label>
+              <div className="input-wrapper">
+                <input
+                  type="text"
+                  value={kycFormData.idNumber}
+                  onChange={(e) =>
+                    handleInputChange("idNumber", e.target.value)
+                  }
+                  placeholder="12345678X o X1234567X"
+                  required
+                />
+                {validation.idNumber && (
+                  <FaCheckCircle className="validation-icon success" />
+                )}
+              </div>
+            </div>
+
+            <div className="form-group">
+              <label>Frente del DNI/NIE</label>
+              <div className="input-wrapper file-input">
+                <input
+                  type="file"
+                  onChange={(e) =>
+                    handleFileChange("frontId", e.target.files[0])
+                  }
+                  accept="image/jpeg,image/png,image/jpg,application/pdf"
+                  required
+                />
+                {validation.frontId && (
+                  <FaCheckCircle className="validation-icon success" />
+                )}
+              </div>
+              <small className="file-info">
+                Formatos aceptados: JPG, PNG, PDF. Máx: 5MB
+              </small>
+            </div>
+
+            <div className="form-group">
+              <label>Reverso del DNI/NIE</label>
+              <div className="input-wrapper file-input">
+                <input
+                  type="file"
+                  onChange={(e) =>
+                    handleFileChange("backId", e.target.files[0])
+                  }
+                  accept="image/jpeg,image/png,image/jpg,application/pdf"
+                  required
+                />
+                {validation.backId && (
+                  <FaCheckCircle className="validation-icon success" />
+                )}
+              </div>
+              <small className="file-info">
+                Formatos aceptados: JPG, PNG, PDF. Máx: 5MB
+              </small>
+            </div>
+
+            <div className="form-group">
+              <label>Selfie con DNI/NIE</label>
+              <div className="input-wrapper file-input">
+                <input
+                  type="file"
+                  onChange={(e) =>
+                    handleFileChange("selfieWithId", e.target.files[0])
+                  }
+                  accept="image/jpeg,image/png,image/jpg"
+                  required
+                />
+                {validation.selfieWithId && (
+                  <FaCheckCircle className="validation-icon success" />
+                )}
+              </div>
+              <small className="file-info">
+                Formatos aceptados: JPG, PNG. Máx: 5MB
+              </small>
+            </div>
+
+            <div className="form-group">
+              <label>Comprobante de Domicilio</label>
+              <div className="input-wrapper file-input">
+                <input
+                  type="file"
+                  onChange={(e) =>
+                    handleFileChange("addressProof", e.target.files[0])
+                  }
+                  accept="image/jpeg,image/png,image/jpg,application/pdf"
+                  required
+                />
+                {validation.addressProof && (
+                  <FaCheckCircle className="validation-icon success" />
+                )}
+              </div>
+              <small className="file-info">
+                Formatos aceptados: JPG, PNG, PDF. Máx: 5MB
+              </small>
+            </div>
+
+            <div className="modal-actions">
+              <button
+                type="submit"
+                className="submit-button"
+                disabled={loading || !Object.values(validation).every(Boolean)}
+              >
+                {loading ? (
+                  <>
+                    <FaSpinner className="spinning" /> Enviando...
+                  </>
+                ) : (
+                  "Enviar Documentación"
+                )}
+              </button>
+              <button
+                type="button"
+                className="cancel-button"
+                onClick={() => setShowKycForm(false)}
+              >
+                Cancelar
+              </button>
+            </div>
+          </form>
+        </motion.div>
+      </motion.div>
+    );
+  };
+
+  if (loading) {
     return (
       <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         className="loading"
       >
-        <FaClock size={24} className="loading-icon" />
+        <FaSpinner className="loading-icon" />
+        <p>Cargando perfil...</p>
       </motion.div>
     );
+  }
 
-  if (error)
+  if (error) {
     return (
       <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         className="error"
       >
-        {error}
+        <p>{error}</p>
+        <button onClick={fetchUserData}>Reintentar</button>
       </motion.div>
     );
+  }
+
+  if (!user) {
+    return null;
+  }
 
   return (
-    <motion.div
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      className="profile-container"
-    >
+    <div className="profile-container">
       <motion.div
-        initial={{ y: -20 }}
-        animate={{ y: 0 }}
+        initial={{ opacity: 0, y: -20 }}
+        animate={{ opacity: 1, y: 0 }}
         className="profile-header"
       >
         <div className="header-content">
-          <h1>¡Hola de nuevo, {user?.firstName}!</h1>
+          <motion.h1
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.2 }}
+          >
+            ¡Hola de nuevo, {user.firstName}!
+          </motion.h1>
         </div>
         <motion.button
           whileHover={{ scale: 1.05 }}
@@ -115,114 +693,105 @@ const Profile = ({ setIsAuthenticated }) => {
           className="logout-button"
           onClick={handleLogout}
         >
-          <FaSignOutAlt /> Cerrar Sesión
+          <FaSignOutAlt /> Salir
         </motion.button>
       </motion.div>
 
-      {user && (
-        <div className="profile-content">
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.1 }}
+        className="profile-content"
+      >
+        <div className="profile-info">
           <motion.div
-            initial={{ opacity: 0, x: -20 }}
-            animate={{ opacity: 1, x: 0 }}
-            className="profile-info"
+            className="info-item"
+            whileHover={{ x: 5 }}
+            transition={{ type: "spring", stiffness: 300 }}
           >
-            <motion.div className="info-item">
-              <FaUser className="icon" />
-              <div>
-                <strong>Nombre Completo</strong>
-                <p>{`${user.firstName} ${user.lastName}`}</p>
-              </div>
-              <span className="verified-badge">
-                <FaCheckCircle /> Verificado
-              </span>
-            </motion.div>
-
-            <motion.div className="info-item">
-              <FaUser className="icon" />
-              <div>
-                <strong>Usuario</strong>
-                <p>{user.email.split("@")[0]}</p>
-              </div>
-            </motion.div>
-
-            <motion.div className="info-item">
-              <FaEnvelope className="icon" />
-              <div>
-                <strong>Email</strong>
-                <p>{user.email}</p>
-              </div>
-            </motion.div>
-
-            <motion.div className="info-item">
-              <FaCalendar className="icon" />
-              <div>
-                <strong>Fecha de Registro</strong>
-                <p>{new Date(user.date).toLocaleDateString()}</p>
-              </div>
-            </motion.div>
-
-            <motion.div className="info-item">
-              <FaChartLine className="icon" />
-              <div>
-                <strong>Nivel de Trader</strong>
-                <p>Profesional</p>
-              </div>
-              <span className="level-badge">
-                <FaMedal /> Pro
-              </span>
-            </motion.div>
-
-            <motion.div className="info-item">
-              <FaHistory className="icon" />
-              <div>
-                <strong>Total de Operaciones</strong>
-                <p>127 trades</p>
-              </div>
-            </motion.div>
+            <FaUser className="icon" />
+            <div>
+              <strong>Nombre Completo</strong>
+              <p>{`${user.firstName} ${user.lastName}`}</p>
+            </div>
+            {renderKYCStatus()}
           </motion.div>
 
           <motion.div
-            initial={{ opacity: 0, x: 20 }}
-            animate={{ opacity: 1, x: 0 }}
-            className="profile-actions"
+            className="info-item"
+            whileHover={{ x: 5 }}
+            transition={{ type: "spring", stiffness: 300 }}
           >
-            <motion.button
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
-              className="action-button"
-              onClick={handleChangePassword}
-            >
-              <FaLock className="icon" />
-              {showChangePassword ? "Cancelar" : "Cambiar Contraseña"}
-            </motion.button>
-
-            <motion.button
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
-              className="action-button"
-              onClick={handleKYC}
-            >
-              <FaIdCard className="icon" />
-              {showKYCForm ? "Cancelar KYC" : "Realizar KYC"}
-            </motion.button>
+            <FaIdCard className="icon" />
+            <div>
+              <strong>Usuario</strong>
+              <p>@{user.username}</p>
+            </div>
           </motion.div>
 
-          <AnimatePresence>
-            {(showChangePassword || showKYCForm) && (
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: 20 }}
-                className="profile-forms"
-              >
-                {showChangePassword && <ChangePassword />}
-                {showKYCForm && <KYCForm />}
-              </motion.div>
-            )}
-          </AnimatePresence>
+          <motion.div
+            className="info-item"
+            whileHover={{ x: 5 }}
+            transition={{ type: "spring", stiffness: 300 }}
+          >
+            <FaEnvelope className="icon" />
+            <div>
+              <strong>Correo Electrónico</strong>
+              <p>{user.email}</p>
+            </div>
+          </motion.div>
+
+          <motion.div
+            className="info-item"
+            whileHover={{ x: 5 }}
+            transition={{ type: "spring", stiffness: 300 }}
+          >
+            <FaCalendarAlt className="icon" />
+            <div>
+              <strong>Fecha de Registro</strong>
+              <p>{new Date(user.date).toLocaleDateString()}</p>
+            </div>
+          </motion.div>
         </div>
-      )}
-    </motion.div>
+
+        <div className="quick-actions">
+          <motion.button
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            className="action-button"
+            onClick={() => setShowPasswordModal(true)}
+          >
+            <div className="button-content">
+              <FaLock className="action-icon" />
+              <span>Cambiar Contraseña</span>
+            </div>
+          </motion.button>
+
+          {user.kycStatus !== "verified" && (
+            <motion.button
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              className="action-button kyc-button"
+              onClick={() => setShowKycForm(true)}
+            >
+              <div className="button-content">
+                <FaShieldAlt className="action-icon" />
+                <span>
+                  {user.kycStatus === "pending"
+                    ? "KYC en Revisión"
+                    : "Completar KYC"}
+                </span>
+              </div>
+            </motion.button>
+          )}
+        </div>
+      </motion.div>
+
+      <AnimatePresence>
+        {showPasswordModal && renderPasswordModal()}
+        {showKycForm && renderKYCFormModal()}
+      </AnimatePresence>
+    </div>
   );
 };
 

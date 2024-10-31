@@ -1,5 +1,6 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import axios from "axios";
 import "../styles/components/auth.css";
 
 const Login = ({ setIsAuthenticated }) => {
@@ -8,10 +9,20 @@ const Login = ({ setIsAuthenticated }) => {
     email: "",
     password: "",
   });
-  const [message, setMessage] = useState("");
+  const [message, setMessage] = useState({ text: "", type: "error" });
   const [loading, setLoading] = useState(false);
 
   const { email, password } = formData;
+
+  // Limpiar mensaje después de 5 segundos
+  useEffect(() => {
+    if (message.text) {
+      const timer = setTimeout(() => {
+        setMessage({ text: "", type: "error" });
+      }, 5000);
+      return () => clearTimeout(timer);
+    }
+  }, [message]);
 
   const onChange = (e) =>
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -19,6 +30,8 @@ const Login = ({ setIsAuthenticated }) => {
   const onSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
+    setMessage({ text: "", type: "error" });
+
     try {
       const response = await fetch("http://localhost:5000/api/users/login", {
         method: "POST",
@@ -27,25 +40,82 @@ const Login = ({ setIsAuthenticated }) => {
         },
         body: JSON.stringify({ email, password }),
       });
+
       const data = await response.json();
+
       if (response.ok) {
-        localStorage.setItem("token", data.token);
-        if (data.role === "admin") {
-          localStorage.setItem("userRole", "admin");
-        } else {
-          localStorage.setItem("userRole", "user");
+        // Verificar si el usuario está bloqueado
+        if (data.user?.isBlocked) {
+          setMessage({
+            text: "Su cuenta ha sido bloqueada. Por favor, contacte con el administrador",
+            type: "error",
+          });
+          return;
         }
+
+        // Guardar token y rol
+        localStorage.setItem("token", data.token);
+        localStorage.setItem(
+          "userRole",
+          data.role === "admin" ? "admin" : "user"
+        );
+
+        // Configurar interceptor de axios para futuros requests
+        axios.interceptors.response.use(
+          (response) => response,
+          (error) => {
+            if (
+              error.response?.status === 403 &&
+              error.response?.data?.error === "USER_BLOCKED"
+            ) {
+              localStorage.removeItem("token");
+              localStorage.removeItem("userRole");
+              setIsAuthenticated(false);
+              navigate("/login");
+              setMessage({
+                text: "Su cuenta ha sido bloqueada. Por favor, contacte con el administrador",
+                type: "error",
+              });
+            }
+            return Promise.reject(error);
+          }
+        );
+
         setIsAuthenticated(true);
+        setMessage({ text: "Inicio de sesión exitoso", type: "success" });
+
+        // Redireccionar según el rol
         navigate(data.role === "admin" ? "/admin" : "/");
       } else {
-        setMessage(data.msg || "Error en el inicio de sesión");
+        // Manejar diferentes tipos de errores
+        if (data.error === "ACCOUNT_BLOCKED") {
+          setMessage({
+            text: "Su cuenta ha sido bloqueada. Por favor, contacte con el administrador",
+            type: "error",
+          });
+        } else {
+          setMessage({
+            text: data.msg || "Error en el inicio de sesión",
+            type: "error",
+          });
+        }
       }
     } catch (error) {
       console.error("Error:", error);
-      setMessage("Error en el servidor. Por favor, intenta de nuevo.");
+      setMessage({
+        text: "Error en el servidor. Por favor, intenta de nuevo.",
+        type: "error",
+      });
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleLogout = () => {
+    localStorage.removeItem("token");
+    localStorage.removeItem("userRole");
+    setIsAuthenticated(false);
+    navigate("/login");
   };
 
   return (
@@ -56,13 +126,13 @@ const Login = ({ setIsAuthenticated }) => {
           <p>Bienvenido de nuevo</p>
         </div>
 
-        {message && (
+        {message.text && (
           <div
             className={`auth-message ${
-              message.includes("exitoso") ? "success" : "error"
+              message.type === "success" ? "success" : "error"
             }`}
           >
-            {message}
+            {message.text}
           </div>
         )}
 
@@ -76,6 +146,7 @@ const Login = ({ setIsAuthenticated }) => {
               value={email}
               onChange={onChange}
               required
+              disabled={loading}
             />
           </div>
 
@@ -88,11 +159,16 @@ const Login = ({ setIsAuthenticated }) => {
               value={password}
               onChange={onChange}
               required
+              disabled={loading}
             />
           </div>
 
           <button type="submit" className="auth-button" disabled={loading}>
-            {loading ? "Iniciando sesión..." : "Iniciar Sesión"}
+            {loading ? (
+              <span className="loading-text">Iniciando sesión...</span>
+            ) : (
+              "Iniciar Sesión"
+            )}
           </button>
         </form>
 

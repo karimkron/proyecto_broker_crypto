@@ -1,7 +1,19 @@
+:root {
+  --primary-gradient: linear-gradient(135deg, #2d3436 0%, #000000 100%);
+  --secondary-gradient: linear-gradient(135deg, #4834d4 0%, #686de0 100%);
+  --accent-gradient: linear-gradient(135deg, #6c5ce7 0%, #a363d9 100%);
+  --success-gradient: linear-gradient(135deg, #00b894 0%, #00cec9 100%);
+  --warning-gradient: linear-gradient(135deg, #fdcb6e 0%, #ffeaa7 100%);
+  --error-gradient: linear-gradient(135deg, #d63031 0%, #ff7675 100%);
+  --glass-bg: rgba(255, 255, 255, 0.1);
+  --glass-border: rgba(255, 255, 255, 0.2);
+  --card-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+}
+
 .profile-container {
   height: 100%;
   width: 100%;
-  padding: 1rem;
+  padding: 1.5rem;
   color: #ffffff;
   font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
     sans-serif;
@@ -11,11 +23,12 @@
   overflow-y: auto;
 }
 
+/* Header Styles */
 .profile-header {
-  background: rgba(255, 255, 255, 0.1);
+  background: var(--glass-bg);
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
-  border: 1px solid rgba(255, 255, 255, 0.2);
+  border: 1px solid var(--glass-border);
   border-radius: 20px;
   padding: 1.5rem;
   display: flex;
@@ -23,38 +36,26 @@
   align-items: center;
 }
 
-.header-content {
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-}
-
-.profile-header h1 {
-  font-size: 1.75rem;
+.header-content h1 {
+  font-size: 2rem;
   font-weight: 700;
   margin: 0;
-  background: linear-gradient(135deg, #4834d4 0%, #686de0 100%);
+  background: var(--accent-gradient);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
-}
-
-.header-subtitle {
-  font-size: 1rem;
-  color: rgba(255, 255, 255, 0.7);
-  margin: 0;
-  font-weight: 500;
 }
 
 .logout-button {
   background: rgba(231, 76, 60, 0.2);
   border: 1px solid rgba(231, 76, 60, 0.4);
   color: #e74c3c;
-  padding: 0.75rem 1rem;
+  padding: 0.75rem 1.25rem;
   border-radius: 12px;
   cursor: pointer;
   display: flex;
   align-items: center;
   gap: 0.5rem;
+  font-size: 0.9rem;
   font-weight: 600;
   transition: all 0.3s ease;
 }
@@ -64,22 +65,23 @@
   transform: translateY(-2px);
 }
 
+/* Profile Content */
 .profile-content {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-  gap: 1rem;
+  gap: 1.5rem;
 }
 
 .profile-info {
-  background: rgba(255, 255, 255, 0.1);
+  background: var(--glass-bg);
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
-  border: 1px solid rgba(255, 255, 255, 0.2);
+  border: 1px solid var(--glass-border);
   border-radius: 20px;
   padding: 1.5rem;
   display: flex;
   flex-direction: column;
-  gap: 1.25rem;
+  gap: 1rem;
 }
 
 .info-item {
@@ -87,14 +89,13 @@
   align-items: center;
   padding: 1rem;
   background: rgba(255, 255, 255, 0.05);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  border: 1px solid var(--glass-border);
   border-radius: 12px;
   transition: all 0.3s ease;
 }
 
 .info-item:hover {
   background: rgba(255, 255, 255, 0.1);
-  transform: translateX(5px);
 }
 
 .info-item .icon {
@@ -111,7 +112,7 @@
 
 .info-item p {
   margin: 0;
-  font-size: 0.875rem;
+  font-size: 0.9rem;
   color: rgba(255, 255, 255, 0.9);
   white-space: nowrap;
   overflow: hidden;
@@ -125,25 +126,39 @@
   margin-bottom: 0.25rem;
 }
 
-.profile-actions {
-  display: flex;
-  flex-direction: column;
+/* Quick Actions */
+.quick-actions {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
   gap: 1rem;
+  margin-top: 1rem;
 }
 
 .action-button {
-  background: rgba(255, 255, 255, 0.1);
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  padding: 1rem;
-  border-radius: 12px;
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-border);
+  border-radius: 16px;
+  padding: 1.25rem;
   color: #ffffff;
   cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: flex-start;
-  gap: 0.75rem;
-  font-weight: 500;
   transition: all 0.3s ease;
+}
+
+.action-button .button-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.action-button .action-icon {
+  font-size: 1.5rem;
+  color: #4834d4;
+}
+
+.action-button span {
+  font-size: 0.9rem;
+  font-weight: 500;
 }
 
 .action-button:hover {
@@ -151,39 +166,251 @@
   transform: translateY(-2px);
 }
 
-.action-button:active {
-  transform: translateY(0);
+.kyc-button {
+  background: linear-gradient(
+    135deg,
+    rgba(72, 52, 212, 0.2) 0%,
+    rgba(104, 109, 224, 0.2) 100%
+  );
 }
 
-.action-button .icon {
-  font-size: 1.25rem;
-  color: #4834d4;
+/* KYC Status */
+.kyc-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.5rem 0.75rem;
+  border-radius: 8px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  margin-left: auto;
 }
 
-.profile-forms {
-  grid-column: 1 / -1;
-  background: rgba(255, 255, 255, 0.1);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  border-radius: 20px;
-  padding: 1.5rem;
-  margin-top: 1rem;
+.kyc-status.verified {
+  background: rgba(46, 204, 113, 0.15);
+  border: 1px solid rgba(46, 204, 113, 0.3);
+  color: #2ecc71;
 }
 
-.loading {
+.kyc-status.pending {
+  background: rgba(241, 196, 15, 0.15);
+  border: 1px solid rgba(241, 196, 15, 0.3);
+  color: #f1c40f;
+}
+
+.kyc-status.not-verified,
+.kyc-status.rejected {
+  background: rgba(231, 76, 60, 0.15);
+  border: 1px solid rgba(231, 76, 60, 0.3);
+  color: #e74c3c;
+}
+
+/* Modal Styles */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.8);
   display: flex;
   justify-content: center;
   align-items: center;
-  min-height: 200px;
+  z-index: 1000;
+  backdrop-filter: blur(5px);
+  -webkit-backdrop-filter: blur(5px);
+}
+
+.modal-content {
+  background: var(--glass-bg);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid var(--glass-border);
+  border-radius: 20px;
+  padding: 2rem;
+  width: 90%;
+  max-width: 500px;
   color: #ffffff;
-  font-size: 1.25rem;
+  max-height: 90vh;
+  overflow-y: auto;
+}
+
+.kyc-modal {
+  max-width: 600px;
+}
+
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.5rem;
+}
+
+.modal-header h3 {
+  margin: 0;
+  font-size: 1.5rem;
+  background: var(--secondary-gradient);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.modal-header .close-button {
+  background: none;
+  border: none;
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 1.5rem;
+  cursor: pointer;
+  padding: 0.5rem;
+  transition: all 0.3s ease;
+  line-height: 1;
+}
+
+.modal-header .close-button:hover {
+  color: #ffffff;
+  transform: rotate(90deg);
+}
+
+/* Form Styles */
+.form-group {
+  margin-bottom: 1.25rem;
+}
+
+.form-group label {
+  display: block;
+  margin-bottom: 0.5rem;
+  font-size: 0.9rem;
+  color: rgba(255, 255, 255, 0.8);
+}
+
+.form-group input {
+  width: 100%;
+  padding: 0.75rem;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--glass-border);
+  border-radius: 8px;
+  color: #ffffff;
+  font-size: 0.9rem;
+  transition: all 0.3s ease;
+}
+
+.form-group input:focus {
+  outline: none;
+  border-color: #4834d4;
+  box-shadow: 0 0 0 2px rgba(72, 52, 212, 0.2);
+}
+
+.form-group input[type="file"] {
+  padding: 0.5rem;
+  cursor: pointer;
+}
+
+.password-input-wrapper {
+  position: relative;
+}
+
+.toggle-password {
+  position: absolute;
+  right: 0.75rem;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  color: rgba(255, 255, 255, 0.5);
+  cursor: pointer;
+  padding: 0.25rem;
+}
+
+.toggle-password:hover {
+  color: rgba(255, 255, 255, 0.8);
+}
+
+.modal-actions {
+  display: flex;
+  gap: 1rem;
+  margin-top: 2rem;
+}
+
+.modal-actions button {
+  flex: 1;
+  padding: 0.75rem 1.5rem;
+  border-radius: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.submit-button {
+  background: var(--secondary-gradient);
+  border: none;
+  color: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+}
+
+.submit-button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(72, 52, 212, 0.2);
+}
+
+.submit-button:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.cancel-button {
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid var(--glass-border);
+  color: #ffffff;
+}
+
+.cancel-button:hover {
+  background: rgba(255, 255, 255, 0.15);
+  transform: translateY(-2px);
+}
+
+/* Loading and Error States */
+.loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 200px;
+  gap: 1rem;
 }
 
 .loading-icon {
-  animation: spin 1s linear infinite;
+  font-size: 2rem;
+  color: #4834d4;
 }
 
+.error {
+  background: var(--error-gradient);
+  padding: 2rem;
+  border-radius: 20px;
+  text-align: center;
+  max-width: 400px;
+  margin: 2rem auto;
+}
+
+.error button {
+  margin-top: 1rem;
+  background: rgba(255, 255, 255, 0.2);
+  border: none;
+  padding: 0.75rem 1.5rem;
+  border-radius: 8px;
+  color: #ffffff;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.error button:hover {
+  background: rgba(255, 255, 255, 0.3);
+}
+
+/* Animations */
 @keyframes spin {
   from {
     transform: rotate(0deg);
@@ -193,74 +420,40 @@
   }
 }
 
-.error {
-  background: rgba(231, 76, 60, 0.2);
-  border: 1px solid rgba(231, 76, 60, 0.4);
-  color: #e74c3c;
-  padding: 1rem;
-  border-radius: 12px;
-  text-align: center;
-  margin: 1rem;
+.spinning {
+  animation: spin 1s linear infinite;
 }
 
-/* Estados especiales */
-.verified-badge,
-.level-badge {
-  display: flex;
-  align-items: center;
-  gap: 0.25rem;
-  padding: 0.25rem 0.5rem;
-  border-radius: 8px;
-  font-size: 0.75rem;
-  font-weight: 600;
-  margin-left: auto;
-  white-space: nowrap;
-}
-
-.verified-badge {
-  background: rgba(46, 204, 113, 0.2);
-  border: 1px solid rgba(46, 204, 113, 0.4);
-  color: #2ecc71;
-}
-
-.level-badge {
-  background: rgba(72, 52, 212, 0.2);
-  border: 1px solid rgba(72, 52, 212, 0.4);
-  color: #4834d4;
-}
-
-/* Responsive */
-@media (max-width: 1024px) {
-  .profile-content {
-    grid-template-columns: 1fr;
-  }
-}
-
+/* Responsive Design */
 @media (max-width: 768px) {
   .profile-container {
-    padding: 0.75rem;
+    padding: 1rem;
   }
 
   .profile-header {
     padding: 1rem;
   }
 
-  .profile-header h1 {
+  .header-content h1 {
     font-size: 1.5rem;
   }
 
-  .header-subtitle {
-    font-size: 0.875rem;
+  .modal-content {
+    width: 95%;
+    padding: 1.5rem;
+    margin: 1rem;
   }
 
-  .info-item {
-    padding: 0.75rem;
+  .modal-actions {
+    flex-direction: column;
   }
 
-  .verified-badge,
-  .level-badge {
-    font-size: 0.7rem;
-    padding: 0.2rem 0.4rem;
+  .modal-actions button {
+    width: 100%;
+  }
+
+  .quick-actions {
+    grid-template-columns: 1fr;
   }
 }
 
@@ -271,74 +464,221 @@
     align-items: flex-start;
   }
 
-  .header-content {
-    width: 100%;
-  }
-
-  .profile-header h1 {
-    font-size: 1.25rem;
-  }
-
   .logout-button {
     width: 100%;
     justify-content: center;
   }
 
   .info-item {
-    flex-wrap: wrap;
+    flex-direction: column;
+    align-items: flex-start;
+    text-align: left;
+    gap: 0.5rem;
   }
 
-  .verified-badge,
-  .level-badge {
-    margin: 0.5rem 0 0;
-    width: 100%;
-    justify-content: center;
+  .kyc-status {
+    margin-left: 0;
+    margin-top: 0.5rem;
   }
 }
 
-/* Scrollbar personalizado */
-.profile-container::-webkit-scrollbar {
-  width: 6px;
-}
-
-.profile-container::-webkit-scrollbar-track {
-  background: rgba(0, 0, 0, 0.1);
-}
-
-.profile-container::-webkit-scrollbar-thumb {
-  background: rgba(72, 52, 212, 0.5);
-  border-radius: 3px;
-}
-
-.profile-container::-webkit-scrollbar-thumb:hover {
-  background: rgba(72, 52, 212, 0.7);
-}
-
-/* Optimizaciones de rendimiento */
+/* Optimizations for reduced motion */
 @media (prefers-reduced-motion: reduce) {
-  .info-item,
-  .action-button,
-  .logout-button {
-    transition: none;
+  * {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
   }
+}
 
-  .loading-icon {
+/* Añade estos estilos a tu archivo Profile.css */
+
+/* Contenedor del input con validación */
+.input-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+  width: 100%;
+  margin-bottom: 0.5rem;
+}
+
+/* Estilo para los inputs dentro del wrapper */
+.input-wrapper input {
+  width: 100%;
+  padding: 0.75rem;
+  padding-right: 2.5rem; /* Espacio para el icono */
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  color: #ffffff;
+  transition: all 0.3s ease;
+}
+
+/* Estilo cuando el input es válido */
+.input-wrapper input:valid {
+  border-color: rgba(46, 213, 115, 0.5);
+}
+
+/* Icono de validación */
+.validation-icon {
+  position: absolute;
+  right: 12px;
+  font-size: 1.1rem;
+  pointer-events: none;
+  transition: all 0.3s ease;
+}
+
+.validation-icon.success {
+  color: #2ecc71;
+}
+
+/* Estilos especiales para inputs de tipo file */
+.file-input {
+  position: relative;
+  margin-bottom: 0.25rem;
+}
+
+.file-input input[type="file"] {
+  padding: 0.6rem;
+  padding-right: 2.5rem;
+  cursor: pointer;
+}
+
+.file-input .validation-icon {
+  top: 50%;
+  transform: translateY(-50%);
+}
+
+/* Información de archivo */
+.file-info {
+  display: block;
+  font-size: 0.75rem;
+  color: rgba(255, 255, 255, 0.6);
+  margin-top: 0.25rem;
+  margin-bottom: 1rem;
+}
+
+/* Mejoras visuales para los inputs */
+.input-wrapper input:focus {
+  outline: none;
+  border-color: #4834d4;
+  box-shadow: 0 0 0 2px rgba(72, 52, 212, 0.2);
+}
+
+.input-wrapper input:hover {
+  background: rgba(255, 255, 255, 0.08);
+}
+
+/* Efecto de hover para inputs válidos */
+.input-wrapper:hover .validation-icon.success {
+  transform: scale(1.1);
+}
+
+/* Estilo para inputs deshabilitados */
+.input-wrapper input:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+/* Animación para el icono de validación */
+@keyframes checkmark {
+  0% {
+    transform: scale(0);
+    opacity: 0;
+  }
+  50% {
+    transform: scale(1.2);
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+.validation-icon.success {
+  animation: checkmark 0.3s ease-in-out forwards;
+}
+
+/* Mejoras para la accesibilidad */
+@media (prefers-reduced-motion: reduce) {
+  .validation-icon.success {
     animation: none;
   }
 }
 
-/* Soporte para modo oscuro del sistema */
-@media (prefers-color-scheme: dark) {
-  .profile-container {
-    color: #ffffff;
+/* Estilos responsivos */
+@media screen and (max-width: 768px) {
+  .input-wrapper input {
+    font-size: 16px; /* Previene el zoom en iOS */
+  }
+
+  .file-info {
+    font-size: 0.7rem;
   }
 }
 
-/* Soporte para navegadores sin backdrop-filter */
-@supports not (backdrop-filter: blur(10px)) {
-  .profile-header,
-  .profile-info,
-  .profile-forms {
-    background: rgba(255, 255, 255, 0.15);
-  }
+/* Estilo para el formulario KYC */
+.kyc-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.form-group {
+  margin-bottom: 1rem;
+}
+
+.form-group label {
+  display: block;
+  margin-bottom: 0.5rem;
+  color: rgba(255, 255, 255, 0.8);
+  font-size: 0.9rem;
+}
+
+/* Estilo para los mensajes de error de validación */
+.input-error {
+  color: #e74c3c;
+  font-size: 0.8rem;
+  margin-top: 0.25rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+/* Estilo para el loader durante la validación */
+.validating {
+  color: #f1c40f;
+}
+
+/* Mejoras visuales para el estado hover de los inputs con validación */
+.input-wrapper:hover input:valid {
+  border-color: rgba(46, 213, 115, 0.8);
+}
+
+/* Estilo para el contenedor del formulario */
+.kyc-modal .modal-content {
+  max-width: 600px;
+  width: 95%;
+  max-height: 90vh;
+  overflow-y: auto;
+}
+
+/* Scroll personalizado para el modal */
+.kyc-modal .modal-content::-webkit-scrollbar {
+  width: 6px;
+}
+
+.kyc-modal .modal-content::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 3px;
+}
+
+.kyc-modal .modal-content::-webkit-scrollbar-thumb {
+  background: rgba(72, 52, 212, 0.5);
+  border-radius: 3px;
+}
+
+.kyc-modal .modal-content::-webkit-scrollbar-thumb:hover {
+  background: rgba(72, 52, 212, 0.7);
 }

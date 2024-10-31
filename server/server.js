@@ -14,6 +14,7 @@ const userRoutes = require("./routes/users");
 const kycRoutes = require("./routes/kyc");
 const walletRoutes = require("./routes/walletRoutes");
 const orderRoutes = require("./routes/orderRoutes");
+const exchangeRateRoutes = require("./routes/exchangeRateRoutes");
 
 const app = express();
 const server = http.createServer(app);
@@ -53,6 +54,7 @@ io.use((socket, next) => {
 
 // Rutas
 app.use("/api", cryptoRoutes);
+app.use("/api", exchangeRateRoutes);
 app.use("/api/invitation-codes", invitationCodesRoutes);
 app.use("/api/kyc", kycRoutes);
 app.use("/api/users", userRoutes);
@@ -60,6 +62,7 @@ app.use("/api/admin", adminRoutes);
 app.use("/api", walletRoutes);
 app.use("/api/trades", tradeRoutes(io));
 app.use("/api/orders", orderRoutes);
+app.use("/api/wallet", walletRoutes);
 
 // Conectar a MongoDB
 mongoose

@@ -97,6 +97,34 @@ h2 {
   font-weight: 500;
 }
 
+/* Nuevas clases para la animación del precio */
+.current-price {
+  transition: color 0.3s ease;
+  font-weight: 600 !important;
+}
+
+.price-increase {
+  color: #2ecc71 !important;
+  animation: priceFlash 0.5s ease;
+}
+
+.price-decrease {
+  color: #e74c3c !important;
+  animation: priceFlash 0.5s ease;
+}
+
+@keyframes priceFlash {
+  0% {
+    opacity: 0.7;
+  }
+  50% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0.7;
+  }
+}
+
 .direction {
   color: #2ecc71 !important;
   font-weight: 600 !important;
@@ -195,6 +223,43 @@ input:focus {
 
 .submit-trade:active {
   transform: translateY(0);
+}
+
+.error-message {
+  background: rgba(231, 76, 60, 0.1);
+  border: 1px solid rgba(231, 76, 60, 0.3);
+  color: #e74c3c;
+  padding: 1rem;
+  border-radius: 12px;
+  margin-bottom: 1rem;
+  text-align: center;
+  font-size: 0.875rem;
+}
+
+.loading-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 200px;
+  color: #ffffff;
+}
+
+.loading-spinner {
+  border: 3px solid rgba(255, 255, 255, 0.1);
+  border-radius: 50%;
+  border-top: 3px solid #4834d4;
+  width: 40px;
+  height: 40px;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
 }
 
 @media (max-width: 360px) {

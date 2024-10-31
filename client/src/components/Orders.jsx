@@ -1,25 +1,25 @@
 import React, { useState, useEffect } from "react";
-import axios from "axios";
-import io from "socket.io-client";
 import { motion, AnimatePresence } from "framer-motion";
-import {
-  FaHistory,
-  FaClock,
-  FaSpinner,
-  FaExclamationTriangle,
-  FaChartLine,
-  FaCheckCircle,
-  FaHourglassHalf,
-  FaDollarSign,
-  FaCalendarAlt,
-  FaClock as FaDuration,
-} from "react-icons/fa";
+import { FaHistory } from "react-icons/fa";
+import io from "socket.io-client";
+import axios from "axios";
 import "../styles/pages/Orders.css";
 
 const Orders = () => {
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+
+  const getMaxPriceVariation = (symbol, initialPrice) => {
+    const symbolLower = symbol.toLowerCase();
+    if (symbolLower === "btc") {
+      return Math.random() * 900 + 300; // Entre 300 y 1200 USDT para BTC
+    } else if (initialPrice < 1) {
+      return Math.random() * 0.02 + 0.01; // Entre 0.01 y 0.03 para criptos de bajo valor
+    } else {
+      return initialPrice * (Math.random() * 0.004 + 0.001); // 0.1% - 0.5% para otras
+    }
+  };
 
   useEffect(() => {
     const token = localStorage.getItem("token");
@@ -35,6 +35,15 @@ const Orders = () => {
             headers: { Authorization: `Bearer ${token}` },
           }
         );
+        console.log(
+          "Orders fetched:",
+          response.data.map((order) => ({
+            orderId: order._id,
+            willProfit: order.willProfit,
+            symbol: order.cryptoSymbol,
+            amount: order.amount,
+          }))
+        );
         setOrders(response.data);
         setLoading(false);
       } catch (err) {
@@ -47,13 +56,20 @@ const Orders = () => {
     fetchOrders();
 
     socket.on("orderUpdate", (data) => {
+      console.log("Order update received:", {
+        orderId: data.orderId,
+        willProfit: data.willProfit,
+        currentPrice: data.currentPrice,
+        progress: data.progress,
+      });
+
       setOrders((prevOrders) =>
         prevOrders.map((order) =>
           order._id === data.orderId
             ? {
                 ...order,
+                currentPrice: data.currentPrice,
                 progress: data.progress,
-                currentProfit: data.currentProfit,
               }
             : order
         )
@@ -61,18 +77,28 @@ const Orders = () => {
     });
 
     socket.on("orderComplete", (data) => {
+      console.log("Order completed:", {
+        orderId: data.orderId,
+        willProfit: data.willProfit,
+        finalPrice: data.finalPrice,
+        result: data.result,
+      });
+
       setOrders((prevOrders) =>
         prevOrders.map((order) =>
           order._id === data.orderId
-            ? { ...order, status: "completada", finalProfit: data.finalProfit }
+            ? {
+                ...order,
+                status: "completada",
+                finalPrice: data.finalPrice,
+                result: data.result,
+              }
             : order
         )
       );
-    });
-
-    socket.on("connect_error", (err) => {
-      console.error("Socket connection error:", err);
-      setError("Error de conexión. Por favor, recargue la página.");
+      setTimeout(() => {
+        window.location.reload();
+      }, 1000);
     });
 
     return () => {
@@ -80,160 +106,178 @@ const Orders = () => {
     };
   }, []);
 
-  if (loading) {
-    return (
-      <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        className="loading"
-      >
-        <FaSpinner className="loading-spinner" size={24} />
-        <span>Cargando órdenes...</span>
-      </motion.div>
-    );
-  }
+  const LiveOrder = ({ order }) => {
+    const [displayPrice, setDisplayPrice] = useState(order.initialPrice);
+    const [currentProfit, setCurrentProfit] = useState(0);
+    const [priceDirection, setPriceDirection] = useState(null);
 
-  if (error) {
+    useEffect(() => {
+      if (order.status === "en progreso") {
+        console.log("Live order status:", {
+          orderId: order._id,
+          willProfit: order.willProfit,
+          symbol: order.cryptoSymbol,
+          initialPrice: order.initialPrice,
+          status: order.status,
+        });
+
+        const startTime = new Date(order.createdAt).getTime();
+        const duration = getDurationInMs(order.duration);
+        const targetProfit = (order.amount * order.profitPercentage) / 100;
+        const maxPriceChange = getMaxPriceVariation(
+          order.cryptoSymbol,
+          order.initialPrice
+        );
+
+        const interval = setInterval(() => {
+          const now = Date.now();
+          const elapsed = now - startTime;
+          const remaining = duration - elapsed;
+
+          if (remaining <= 0) {
+            clearInterval(interval);
+            if (order.willProfit) {
+              setCurrentProfit(targetProfit);
+              setDisplayPrice(order.initialPrice + maxPriceChange);
+            } else {
+              setCurrentProfit(-order.amount);
+              setDisplayPrice(
+                Math.max(
+                  order.initialPrice - maxPriceChange,
+                  order.initialPrice * 0.7
+                )
+              );
+            }
+          } else {
+            const progress = elapsed / duration;
+            const smoothProgress = Math.pow(progress, 0.5);
+
+            if (order.willProfit) {
+              const profitProgress =
+                smoothProgress + Math.random() * 0.1 * smoothProgress;
+              const currentAmount = targetProfit * profitProgress;
+              setCurrentProfit(Math.min(currentAmount, targetProfit));
+
+              const priceChange = maxPriceChange * smoothProgress;
+              const noise = maxPriceChange * 0.01 * (Math.random() - 0.5);
+              const newPrice = order.initialPrice + priceChange + noise;
+              setDisplayPrice(newPrice);
+              setPriceDirection("up");
+            } else {
+              const lossProgress = smoothProgress;
+              setCurrentProfit(-order.amount * lossProgress);
+
+              const priceChange = maxPriceChange * lossProgress;
+              const noise = maxPriceChange * 0.01 * (Math.random() - 0.5);
+              const newPrice = Math.max(
+                order.initialPrice - priceChange + noise,
+                order.initialPrice * 0.7
+              );
+              setDisplayPrice(newPrice);
+              setPriceDirection("down");
+            }
+          }
+        }, 100);
+
+        return () => clearInterval(interval);
+      }
+    }, [order]);
+
     return (
-      <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        className="error-message"
-      >
-        <FaExclamationTriangle />
-        <span>{error}</span>
-      </motion.div>
+      <>
+        <div className="order-symbol">{order.cryptoSymbol}/usdt</div>
+        <div className={`order-type ${order.orderType}`}>
+          {order.orderType} {formatAmount(order.amount)}
+        </div>
+        <div className="price-range">
+          <span>{formatPrice(order.initialPrice)}</span>
+          <span className="price-arrow">→</span>
+          <span className={`price-value ${priceDirection}`}>
+            {formatPrice(
+              order.status === "completada" ? order.finalPrice : displayPrice
+            )}
+          </span>
+        </div>
+        <div className="order-time">{formatTime(order.createdAt)}</div>
+        <div
+          className={`profit-display ${
+            order.willProfit ? "positive" : "negative"
+          }`}
+        >
+          {order.status === "completada"
+            ? formatProfit(order.result)
+            : formatProfit(currentProfit)}
+        </div>
+      </>
     );
-  }
+  };
+
+  const getDurationInMs = (duration) => {
+    const durationMap = {
+      "30S": 30 * 1000,
+      "60S": 60 * 1000,
+      "120S": 120 * 1000,
+    };
+    return durationMap[duration] || 30 * 1000;
+  };
+
+  const formatTime = (date) => {
+    if (!date) return "";
+    const d = new Date(date);
+    return d.toLocaleTimeString([], {
+      hour: "2-digit",
+      minute: "2-digit",
+      second: "2-digit",
+      hour12: false,
+    });
+  };
+
+  const formatPrice = (price) => {
+    if (!price || isNaN(price)) return "0.00000";
+    return price.toFixed(5);
+  };
+
+  const formatAmount = (amount) => {
+    if (!amount || isNaN(amount)) return "0.00";
+    return amount.toFixed(2);
+  };
+
+  const formatProfit = (profit) => {
+    if (!profit || isNaN(profit)) return "+0.00";
+    return profit >= 0
+      ? `+${profit.toFixed(2)}`
+      : `-${Math.abs(profit).toFixed(2)}`;
+  };
+
+  if (loading) return <div className="loading">Cargando órdenes...</div>;
+  if (error) return <div className="error-message">{error}</div>;
 
   return (
-    <motion.div
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      className="orders-container"
-    >
-      <motion.div
-        initial={{ y: -20 }}
-        animate={{ y: 0 }}
-        className="orders-header"
-      >
+    <div className="orders-container">
+      <div className="orders-header">
         <h2>
-          <FaHistory /> Historial de Órdenes
+          <FaHistory /> Historial de Trades
         </h2>
-      </motion.div>
+      </div>
 
-      {orders.length === 0 ? (
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          className="no-orders"
-        >
-          <FaClock size={48} />
-          <p>No hay órdenes para mostrar.</p>
-        </motion.div>
-      ) : (
-        <motion.div className="orders-list">
-          <AnimatePresence>
-            {orders.map((order, index) => (
-              <motion.div
-                key={order._id}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, scale: 0.95 }}
-                transition={{ delay: index * 0.1 }}
-                className="order-item"
-              >
-                <div className="order-header">
-                  <div className="crypto-info">
-                    <FaChartLine />
-                    <span className="crypto-symbol">{order.cryptoSymbol}</span>
-                  </div>
-                  <div className="order-date">
-                    <FaCalendarAlt />
-                    {new Date(order.createdAt).toLocaleDateString()}
-                  </div>
-                </div>
-
-                <div className="order-details">
-                  <div className="detail-item">
-                    <span className="detail-label">
-                      <FaDollarSign /> Cantidad
-                    </span>
-                    <span className="detail-value">
-                      ${order.amount.toFixed(2)}
-                    </span>
-                  </div>
-
-                  <div className="detail-item">
-                    <span className="detail-label">
-                      <FaDuration /> Duración
-                    </span>
-                    <span className="detail-value">{order.duration}</span>
-                  </div>
-
-                  <div className="detail-item">
-                    <span className="detail-label">
-                      <FaChartLine /> Ganancia Estimada
-                    </span>
-                    <span className="detail-value">
-                      ${order.estimatedProfit.toFixed(2)}
-                    </span>
-                  </div>
-
-                  {order.status === "en progreso" ? (
-                    <div className="order-progress-container">
-                      <div className="order-progress">
-                        <motion.div
-                          className="progress-bar"
-                          initial={{ width: "0%" }}
-                          animate={{ width: `${(order.progress || 0) * 100}%` }}
-                        />
-                      </div>
-                      <div className="current-profit">
-                        <FaDollarSign />
-                        {(order.currentProfit || 0).toFixed(2)}
-                      </div>
-                    </div>
-                  ) : (
-                    <div className="detail-item">
-                      <span className="detail-label">
-                        <FaCheckCircle /> Ganancia Final
-                      </span>
-                      <span
-                        className={`detail-value ${
-                          order.finalProfit > 0
-                            ? "profit-positive"
-                            : "profit-negative"
-                        }`}
-                      >
-                        $
-                        {order.finalProfit
-                          ? order.finalProfit.toFixed(2)
-                          : "N/A"}
-                      </span>
-                    </div>
-                  )}
-
-                  <div className="detail-item">
-                    <motion.span
-                      className={`order-status ${order.status}`}
-                      whileHover={{ scale: 1.05 }}
-                    >
-                      {order.status === "en progreso" && <FaHourglassHalf />}
-                      {order.status === "completada" && <FaCheckCircle />}
-                      {order.status === "cancelada" && (
-                        <FaExclamationTriangle />
-                      )}
-                      {" " + order.status}
-                    </motion.span>
-                  </div>
-                </div>
-              </motion.div>
-            ))}
-          </AnimatePresence>
-        </motion.div>
-      )}
-    </motion.div>
+      <div className="orders-list">
+        <AnimatePresence>
+          {orders.map((order) => (
+            <motion.div
+              key={order._id}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+              className="order-item"
+            >
+              <div className="order-row">
+                <LiveOrder order={order} />
+              </div>
+            </motion.div>
+          ))}
+        </AnimatePresence>
+      </div>
+    </div>
   );
 };
 

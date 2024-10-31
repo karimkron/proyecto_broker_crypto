@@ -20,7 +20,6 @@ const DepositForm = () => {
   const [amount, setAmount] = useState("");
   const [message, setMessage] = useState("");
   const [messageType, setMessageType] = useState("");
-  const [eurToUSDT, setEurToUSDT] = useState(null);
   const [action, setAction] = useState("deposit");
   const [transactions, setTransactions] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -43,19 +42,7 @@ const DepositForm = () => {
       }
     };
 
-    const fetchExchangeRate = async () => {
-      try {
-        const response = await axios.get(
-          "https://api.coingecko.com/api/v3/simple/price?ids=tether&vs_currencies=eur"
-        );
-        setEurToUSDT(response.data.tether.eur);
-      } catch (error) {
-        console.error("Error fetching exchange rate:", error);
-      }
-    };
-
     fetchUsers();
-    fetchExchangeRate();
   }, []);
 
   const handleSubmit = async (e) => {
@@ -74,17 +61,13 @@ const DepositForm = () => {
         }
       );
 
-      if (
-        response.data &&
-        response.data.newBalanceEUR !== undefined &&
-        response.data.newBalanceUSDT !== undefined
-      ) {
+      if (response.data && response.data.newBalanceEUR !== undefined) {
         setMessage(
           `${
             action === "deposit" ? "Depósito" : "Retiro"
           } realizado con éxito. Nuevo balance: ${response.data.newBalanceEUR.toFixed(
             2
-          )} EUR (${response.data.newBalanceUSDT.toFixed(2)} USDT)`
+          )} EUR`
         );
         setMessageType("success");
         fetchTransactions(selectedUser);
@@ -193,7 +176,7 @@ const DepositForm = () => {
             {users.map((user) => (
               <option key={user._id} value={user._id}>
                 {user.email} - Balance: {user.balanceEUR?.toFixed(2) || "0.00"}{" "}
-                EUR ({user.balanceUSDT?.toFixed(2) || "0.00"} USDT)
+                EUR
               </option>
             ))}
           </select>
@@ -227,11 +210,6 @@ const DepositForm = () => {
             min="0"
             step="0.01"
           />
-          {eurToUSDT && amount && (
-            <div className="usdt-equivalent">
-              Equivalente en USDT: {(amount / eurToUSDT).toFixed(2)} USDT
-            </div>
-          )}
         </div>
 
         <motion.button
@@ -283,8 +261,7 @@ const DepositForm = () => {
                       {transaction.type === "deposit" ? "Depósito" : "Retiro"}
                     </span>
                     <span className="transaction-amount">
-                      {transaction.amountEUR.toFixed(2)} EUR (
-                      {transaction.amountUSDT.toFixed(2)} USDT)
+                      {transaction.amountEUR.toFixed(2)} EUR
                     </span>
                   </div>
                   <span className="transaction-date">

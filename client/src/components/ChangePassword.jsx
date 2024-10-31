@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import "../styles/pages/ChangePassword.css";
 
 const ChangePassword = () => {
   const [passwords, setPasswords] = useState({
@@ -82,7 +83,9 @@ const ChangePassword = () => {
           placeholder="Confirmar nueva contraseña"
           required
         />
-        <button type="submit">Cambiar Contraseña</button>
+        <button type="submit" className="btn-submit">
+          Cambiar Contraseña
+        </button>
       </form>
     </div>
   );

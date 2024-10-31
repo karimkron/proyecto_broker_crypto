@@ -12,7 +12,30 @@ const TradeModal = ({ cryptoData, tradeType, onClose }) => {
   const [error, setError] = useState("");
   const [profitPercentages, setProfitPercentages] = useState({});
   const [estimatedProfit, setEstimatedProfit] = useState(0);
+  const [currentPrice, setCurrentPrice] = useState(cryptoData.current_price);
+  const [priceDirection, setPriceDirection] = useState(null);
   const navigate = useNavigate();
+
+  // Función para generar variación de precio aleatoria
+  const generatePriceVariation = (basePrice) => {
+    const variation = (Math.random() - 0.5) * 0.0001;
+    return basePrice + variation;
+  };
+
+  // Efecto para la actualización del precio en tiempo real
+  useEffect(() => {
+    setCurrentPrice(cryptoData.current_price);
+
+    const interval = setInterval(() => {
+      setCurrentPrice((prevPrice) => {
+        const newPrice = generatePriceVariation(prevPrice);
+        setPriceDirection(newPrice > prevPrice ? "up" : "down");
+        return newPrice;
+      });
+    }, 100);
+
+    return () => clearInterval(interval);
+  }, [cryptoData.current_price]);
 
   useEffect(() => {
     const fetchUserData = async () => {
@@ -55,24 +78,45 @@ const TradeModal = ({ cryptoData, tradeType, onClose }) => {
     }
     try {
       const token = localStorage.getItem("token");
+      const orderData = {
+        cryptoSymbol: cryptoData.symbol,
+        orderType: tradeType,
+        amount: parseFloat(amount),
+        duration,
+        initialPrice: currentPrice,
+        profitPercentage: profitPercentages[duration],
+      };
+
       const response = await axios.post(
         "http://localhost:5000/api/trades/trade",
-        {
-          cryptoSymbol: cryptoData.symbol,
-          amount: parseFloat(amount),
-          duration,
-          estimatedProfit,
-        },
+        orderData,
         {
           headers: { Authorization: `Bearer ${token}` },
         }
       );
+
       console.log("Orden enviada:", response.data);
       onClose();
       navigate("/orders");
     } catch (err) {
+      console.error("Error al enviar la orden:", err);
       setError(err.response?.data?.msg || "Error al procesar la orden");
     }
+  };
+
+  const formatPrice = (price) => {
+    if (typeof price !== "number") return "0.0000";
+    return price.toFixed(4);
+  };
+
+  const getPriceClassName = () => {
+    return `current-price ${
+      priceDirection === "up"
+        ? "price-increase"
+        : priceDirection === "down"
+        ? "price-decrease"
+        : ""
+    }`;
   };
 
   if (loading) return <div>Cargando...</div>;
@@ -92,7 +136,9 @@ const TradeModal = ({ cryptoData, tradeType, onClose }) => {
           </div>
           <div className="info-row">
             <span>Precio actual</span>
-            <span>${cryptoData.current_price.toFixed(2)}</span>
+            <span className={getPriceClassName()}>
+              ${formatPrice(currentPrice)}
+            </span>
           </div>
           <div className="info-row">
             <span>Dirección</span>
@@ -125,7 +171,7 @@ const TradeModal = ({ cryptoData, tradeType, onClose }) => {
           <div className="form-group">
             <label>
               Saldo disponible:{" "}
-              <span className="balance">{userBalance.toFixed(2)} USDT</span>
+              <span className="balance">{userBalance.toFixed(4)} USDT</span>
             </label>
             <input
               type="number"
@@ -139,7 +185,7 @@ const TradeModal = ({ cryptoData, tradeType, onClose }) => {
             />
           </div>
           <div className="form-group">
-            <label>Ganancia estimada: {estimatedProfit.toFixed(2)} USDT</label>
+            <label>Ganancia estimada: {estimatedProfit.toFixed(4)} USDT</label>
           </div>
           <button type="submit" className="submit-trade">
             Confirmación del pedido

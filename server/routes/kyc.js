@@ -5,7 +5,6 @@ const nodemailer = require("nodemailer");
 const auth = require("../middleware/auth");
 const User = require("../models/User");
 
-// Configurar multer para el almacenamiento de archivos
 const storage = multer.diskStorage({
   destination: function (req, file, cb) {
     cb(null, "uploads/");
@@ -17,7 +16,6 @@ const storage = multer.diskStorage({
 
 const upload = multer({ storage: storage });
 
-// Configurar el transporter de nodemailer (ajusta esto con tu proveedor de correo)
 const transporter = nodemailer.createTransport({
   service: "gmail",
   auth: {
@@ -40,27 +38,38 @@ router.post(
       const { fullName, dateOfBirth, address, idNumber } = req.body;
       const user = await User.findById(req.user.id);
 
-      // Actualizar el estado de KYC del usuario
+      if (user.kycStatus === "verified") {
+        return res.status(400).json({ msg: "KYC ya está verificado" });
+      }
+
+      // Cambiar de not_submitted a pending
       user.kycStatus = "pending";
+      user.kycSubmissionDate = new Date();
+      user.kycRejectionReason = null;
       await user.save();
 
-      // Preparar y enviar el correo
       const mailOptions = {
         from: process.env.EMAIL_USER,
         to: process.env.KYC_RECIPIENT,
         subject: `Nueva solicitud de KYC de ${fullName}`,
         text: `
-                Nombre completo: ${fullName}
-                Fecha de nacimiento: ${dateOfBirth}
-                Dirección: ${address}
-                Número de DNI/NIE: ${idNumber}
-                
-                Los archivos adjuntos incluyen:
-                - Frente del DNI/NIE
-                - Reverso del DNI/NIE
-                - Selfie con DNI/NIE
-                - Comprobante de domicilio
-            `,
+          Detalles del usuario:
+          ID: ${user._id}
+          Email: ${user.email}
+          
+          Información KYC:
+          Nombre completo: ${fullName}
+          Fecha de nacimiento: ${dateOfBirth}
+          Dirección: ${address}
+          Número de DNI/NIE: ${idNumber}
+          Fecha de envío: ${new Date().toLocaleString()}
+          
+          Los archivos adjuntos incluyen:
+          - Frente del DNI/NIE
+          - Reverso del DNI/NIE
+          - Selfie con DNI/NIE
+          - Comprobante de domicilio
+        `,
         attachments: [
           {
             filename: req.files["frontId"][0].filename,
@@ -83,16 +92,36 @@ router.post(
 
       transporter.sendMail(mailOptions, (error, info) => {
         if (error) {
-          console.log(error);
+          console.error("Error al enviar el correo KYC:", error);
           return res.status(500).json({ msg: "Error al enviar el correo" });
         }
-        res.json({ msg: "Información de KYC enviada con éxito" });
+        res.json({
+          msg: "Documentación KYC enviada con éxito. En proceso de verificación.",
+          kycStatus: "pending",
+          kycSubmissionDate: user.kycSubmissionDate,
+        });
       });
     } catch (err) {
-      console.error(err.message);
-      res.status(500).send("Error del servidor");
+      console.error("Error en el procesamiento de KYC:", err);
+      res.status(500).json({
+        msg: "Error del servidor al procesar KYC",
+        error: err.message,
+      });
     }
   }
 );
+
+// Obtener estado de KYC del usuario
+router.get("/status", auth, async (req, res) => {
+  try {
+    const user = await User.findById(req.user.id).select(
+      "kycStatus kycSubmissionDate kycVerificationDate kycRejectionReason"
+    );
+    res.json(user);
+  } catch (err) {
+    console.error("Error al obtener estado KYC:", err);
+    res.status(500).json({ msg: "Error al obtener estado KYC" });
+  }
+});
 
 module.exports = router;

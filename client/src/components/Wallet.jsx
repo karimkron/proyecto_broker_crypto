@@ -18,9 +18,10 @@ import {
   FaMinus,
   FaExclamationTriangle,
 } from "react-icons/fa";
+import ExchangeModal from "./ExchangeModal";
 import "../styles/pages/wallet.css";
 
-const CACHE_DURATION = 5 * 60 * 1000;
+const CACHE_DURATION = 120000; // 2 minutos
 
 const Wallet = () => {
   const [balances, setBalances] = useState({
@@ -41,6 +42,21 @@ const Wallet = () => {
   const [selectedCurrency, setSelectedCurrency] = useState(null);
   const [showDetails, setShowDetails] = useState(false);
   const [loadingProgress, setLoadingProgress] = useState(0);
+  const [showExchangeModal, setShowExchangeModal] = useState(false);
+
+  // Función para formatear monedas con decimales específicos por tipo
+  const formatCurrency = (value, currency) => {
+    let decimals;
+    if (currency === "EUR" || currency === "USDT") {
+      decimals = 2;
+    } else {
+      decimals = 8;
+    }
+    return new Intl.NumberFormat("en-US", {
+      minimumFractionDigits: decimals,
+      maximumFractionDigits: decimals,
+    }).format(value);
+  };
 
   useEffect(() => {
     const fetchWalletData = async () => {
@@ -55,14 +71,19 @@ const Wallet = () => {
           },
         });
 
-        const { balanceEUR, balanceUSDT } = response.data;
+        console.log("Wallet data response:", response.data); // Para debug
+
+        const { balanceEUR, balanceUSDT, balanceBTC, balanceETH } =
+          response.data;
         setBalances((prevBalances) => ({
           ...prevBalances,
-          EUR: { ...prevBalances.EUR, available: balanceEUR },
-          USDT: { ...prevBalances.USDT, available: balanceUSDT },
+          EUR: { ...prevBalances.EUR, available: balanceEUR || 0 },
+          USDT: { ...prevBalances.USDT, available: balanceUSDT || 0 },
+          BTC: { ...prevBalances.BTC, available: balanceBTC || 0 },
+          ETH: { ...prevBalances.ETH, available: balanceETH || 0 },
         }));
-        setTotalAssetsEUR(balanceEUR);
-        setTotalAssetsUSDT(balanceUSDT);
+        setTotalAssetsEUR(balanceEUR || 0);
+        setTotalAssetsUSDT(balanceUSDT || 0);
       } catch (error) {
         console.error("Error fetching wallet data:", error);
         setError(
@@ -105,10 +126,10 @@ const Wallet = () => {
     fetchWalletData();
     fetchCryptoData();
 
-    // Simulación de actualización en tiempo real
     const interval = setInterval(() => {
-      updateRandomPrices();
-    }, 3000);
+      fetchWalletData();
+      fetchCryptoData();
+    }, CACHE_DURATION);
 
     return () => clearInterval(interval);
   }, []);
@@ -126,33 +147,51 @@ const Wallet = () => {
     });
   };
 
-  const updateRandomPrices = () => {
-    setBalances((prevBalances) => {
-      const updatedBalances = { ...prevBalances };
-      Object.keys(updatedBalances).forEach((currency) => {
-        const randomChange = (Math.random() - 0.5) * 0.001;
-        updatedBalances[currency].available *= 1 + randomChange;
-      });
-      return updatedBalances;
-    });
-  };
-
   const handleRefresh = async () => {
     setIsRefreshing(true);
     try {
-      const fetchWalletData = async () => {
-        // ... (código existente de fetchWalletData)
-      };
-      const fetchCryptoData = async () => {
-        // ... (código existente de fetchCryptoData)
-      };
-      await fetchWalletData();
-      await fetchCryptoData();
+      const token = localStorage.getItem("token");
+      const [walletResponse, cryptoResponse] = await Promise.all([
+        axios.get("http://localhost:5000/api/wallet", {
+          headers: { Authorization: `Bearer ${token}` },
+        }),
+        axios.get("http://localhost:5000/api/crypto-data"),
+      ]);
+
+      const { balanceEUR, balanceUSDT, balanceBTC, balanceETH } =
+        walletResponse.data;
+      setBalances((prevBalances) => ({
+        ...prevBalances,
+        EUR: { ...prevBalances.EUR, available: balanceEUR || 0 },
+        USDT: { ...prevBalances.USDT, available: balanceUSDT || 0 },
+        BTC: { ...prevBalances.BTC, available: balanceBTC || 0 },
+        ETH: { ...prevBalances.ETH, available: balanceETH || 0 },
+      }));
+      setTotalAssetsEUR(balanceEUR || 0);
+      setTotalAssetsUSDT(balanceUSDT || 0);
+
+      updateBalances(cryptoResponse.data);
+    } catch (error) {
+      console.error("Error refreshing data:", error);
+      setError("Error al actualizar los datos. Por favor, intenta de nuevo.");
     } finally {
       setTimeout(() => {
         setIsRefreshing(false);
       }, 1000);
     }
+  };
+
+  const handleExchangeComplete = (data) => {
+    console.log("Exchange complete data:", data); // Para debug
+    setBalances((prevBalances) => ({
+      ...prevBalances,
+      EUR: { ...prevBalances.EUR, available: data.newBalanceEUR || 0 },
+      USDT: { ...prevBalances.USDT, available: data.newBalanceUSDT || 0 },
+      BTC: { ...prevBalances.BTC, available: data.newBalanceBTC || 0 },
+      ETH: { ...prevBalances.ETH, available: data.newBalanceETH || 0 },
+    }));
+    setTotalAssetsEUR(data.newBalanceEUR || 0);
+    setTotalAssetsUSDT(data.newBalanceUSDT || 0);
   };
 
   const getCurrencyIcon = (currency) => {
@@ -187,163 +226,181 @@ const Wallet = () => {
   }
 
   return (
-    <div className="wallet-container">
-      <motion.div
-        initial={{ opacity: 0, y: -20 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="wallet-header"
-      >
-        <div className="header-content">
-          <div className="title-section">
-            <h1>Mi Billetera</h1>
-            <p className="subtitle">Panel de Control</p>
+    <>
+      <div className="wallet-container">
+        <motion.div
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="wallet-header"
+        >
+          <div className="header-content">
+            <div className="title-section">
+              <h1>Mi Billetera</h1>
+              <p className="subtitle">Panel de Control</p>
+            </div>
+            <motion.button
+              whileHover={{ scale: 1.1 }}
+              whileTap={{ scale: 0.9 }}
+              className="refresh-button"
+              onClick={handleRefresh}
+              disabled={isRefreshing}
+            >
+              <FaSync className={isRefreshing ? "spinning" : ""} />
+            </motion.button>
           </div>
+        </motion.div>
+
+        <motion.div
+          initial={{ opacity: 0, scale: 0.95 }}
+          animate={{ opacity: 1, scale: 1 }}
+          className="balance-card main-balance"
+        >
+          <div className="balance-card-content">
+            <div className="balance-info">
+              <h2>Balance Total</h2>
+              <motion.div
+                className="total-amount"
+                initial={{ scale: 0.5, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                transition={{ duration: 0.5 }}
+              >
+                <span className="currency-symbol">€</span>
+                <span>{formatCurrency(totalAssetsEUR, "EUR")}</span>
+              </motion.div>
+              <p className="usdt-equivalent">
+                ≈ ${formatCurrency(totalAssetsUSDT, "USDT")} USDT
+              </p>
+            </div>
+            <div className="balance-chart">
+              <motion.div
+                className="trend-indicator positive"
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+              >
+                <FaChartLine />
+                <span>+2.4% esta semana</span>
+              </motion.div>
+            </div>
+          </div>
+          <div className="card-background-effect"></div>
+        </motion.div>
+
+        <div className="quick-actions">
           <motion.button
-            whileHover={{ scale: 1.1 }}
-            whileTap={{ scale: 0.9 }}
-            className="refresh-button"
-            onClick={handleRefresh}
-            disabled={isRefreshing}
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            className="action-button deposit"
           >
-            <FaSync className={isRefreshing ? "spinning" : ""} />
+            <div className="button-content">
+              <FaArrowDown className="action-icon" />
+              <span>Depositar</span>
+            </div>
+          </motion.button>
+
+          <motion.button
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            className="action-button withdraw"
+          >
+            <div className="button-content">
+              <FaArrowUp className="action-icon" />
+              <span>Retirar</span>
+            </div>
+          </motion.button>
+
+          <motion.button
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            className="action-button exchange"
+            onClick={() => setShowExchangeModal(true)}
+          >
+            <div className="button-content">
+              <FaExchangeAlt className="action-icon" />
+              <span>Intercambiar</span>
+            </div>
           </motion.button>
         </div>
-      </motion.div>
 
-      <motion.div
-        initial={{ opacity: 0, scale: 0.95 }}
-        animate={{ opacity: 1, scale: 1 }}
-        className="balance-card main-balance"
-      >
-        <div className="balance-card-content">
-          <div className="balance-info">
-            <h2>Balance Total</h2>
-            <motion.div
-              className="total-amount"
-              initial={{ scale: 0.5, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              transition={{ duration: 0.5 }}
-            >
-              <span className="currency-symbol">€</span>
-              <span>{totalAssetsEUR.toFixed(2)}</span>
-            </motion.div>
-            <p className="usdt-equivalent">
-              ≈ ${totalAssetsUSDT.toFixed(2)} USDT
-            </p>
-          </div>
-          <div className="balance-chart">
-            <motion.div
-              className="trend-indicator positive"
-              initial={{ opacity: 0, x: 20 }}
-              animate={{ opacity: 1, x: 0 }}
-            >
-              <FaChartLine />
-              <span>+2.4% esta semana</span>
-            </motion.div>
-          </div>
-        </div>
-        <div className="card-background-effect"></div>
-      </motion.div>
-
-      <div className="quick-actions">
-        <motion.button
-          whileHover={{ scale: 1.05 }}
-          whileTap={{ scale: 0.95 }}
-          className="action-button deposit"
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          className="assets-grid"
         >
-          <div className="button-content">
-            <FaArrowDown className="action-icon" />
-            <span>Depositar</span>
-          </div>
-        </motion.button>
+          <AnimatePresence>
+            {Object.entries(balances).map(([currency, balance], index) => (
+              <motion.div
+                key={currency}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, scale: 0.95 }}
+                transition={{ delay: index * 0.1 }}
+                className={`asset-card ${
+                  selectedCurrency === currency ? "selected" : ""
+                }`}
+                onClick={() => setSelectedCurrency(currency)}
+                whileHover={{ scale: 1.02 }}
+              >
+                <div className="asset-card-header">
+                  {getCurrencyIcon(currency)}
+                  <h3>{currency}</h3>
+                </div>
 
-        <motion.button
-          whileHover={{ scale: 1.05 }}
-          whileTap={{ scale: 0.95 }}
-          className="action-button withdraw"
-        >
-          <div className="button-content">
-            <FaArrowUp className="action-icon" />
-            <span>Retirar</span>
-          </div>
-        </motion.button>
+                <div className="asset-card-body">
+                  <div className="asset-amount">
+                    <span className="amount-value">
+                      {formatCurrency(balance.available, currency)}
+                    </span>
+                    <span className="amount-label">Disponible</span>
+                  </div>
 
-        <motion.button
-          whileHover={{ scale: 1.05 }}
-          whileTap={{ scale: 0.95 }}
-          className="action-button exchange"
-        >
-          <div className="button-content">
-            <FaExchangeAlt className="action-icon" />
-            <span>Intercambiar</span>
-          </div>
-        </motion.button>
+                  <div className="asset-details">
+                    <div className="detail-item">
+                      <span className="detail-value">
+                        {formatCurrency(balance.frozen, currency)}
+                      </span>
+                      <span className="detail-label">Bloqueado</span>
+                    </div>
+
+                    <div className="detail-item">
+                      <span className="detail-value">
+                        {formatCurrency(
+                          balance.available + balance.frozen,
+                          currency
+                        )}
+                      </span>
+                      <span className="detail-label">Total</span>
+                    </div>
+                  </div>
+                </div>
+
+                <motion.div
+                  className="asset-card-footer"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                >
+                  <button className="action-link">
+                    Ver detalles
+                    <FaChevronRight />
+                  </button>
+                </motion.div>
+              </motion.div>
+            ))}
+          </AnimatePresence>
+        </motion.div>
       </div>
 
-      <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        className="assets-grid"
-      >
-        <AnimatePresence>
-          {Object.entries(balances).map(([currency, balance], index) => (
-            <motion.div
-              key={currency}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.95 }}
-              transition={{ delay: index * 0.1 }}
-              className={`asset-card ${
-                selectedCurrency === currency ? "selected" : ""
-              }`}
-              onClick={() => setSelectedCurrency(currency)}
-              whileHover={{ scale: 1.02 }}
-            >
-              <div className="asset-card-header">
-                {getCurrencyIcon(currency)}
-                <h3>{currency}</h3>
-              </div>
-
-              <div className="asset-card-body">
-                <div className="asset-amount">
-                  <span className="amount-value">
-                    {balance.available.toFixed(4)}
-                  </span>
-                  <span className="amount-label">Disponible</span>
-                </div>
-
-                <div className="asset-details">
-                  <div className="detail-item">
-                    <span className="detail-value">
-                      {balance.frozen.toFixed(4)}
-                    </span>
-                    <span className="detail-label">Bloqueado</span>
-                  </div>
-
-                  <div className="detail-item">
-                    <span className="detail-value">
-                      {(balance.available + balance.frozen).toFixed(4)}
-                    </span>
-                    <span className="detail-label">Total</span>
-                  </div>
-                </div>
-              </div>
-
-              <motion.div
-                className="asset-card-footer"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-              >
-                <button className="action-link">
-                  Ver detalles
-                  <FaChevronRight />
-                </button>
-              </motion.div>
-            </motion.div>
-          ))}
-        </AnimatePresence>
-      </motion.div>
-    </div>
+      <AnimatePresence>
+        {showExchangeModal && (
+          <ExchangeModal
+            isOpen={showExchangeModal}
+            onClose={() => setShowExchangeModal(false)}
+            onExchangeComplete={handleExchangeComplete}
+            balances={balances}
+            formatCurrency={formatCurrency}
+          />
+        )}
+      </AnimatePresence>
+    </>
   );
 };
 

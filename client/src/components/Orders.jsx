@@ -253,29 +253,31 @@ const Orders = () => {
   if (error) return <div className="error-message">{error}</div>;
 
   return (
-    <div className="orders-container">
-      <div className="orders-header">
-        <h2>
-          <FaHistory /> Historial de Trades
-        </h2>
-      </div>
+    <div className="orders-page-container">
+      <div className="orders-container">
+        <div className="orders-header">
+          <h2>
+            <FaHistory /> Historial de Trades
+          </h2>
+        </div>
 
-      <div className="orders-list">
-        <AnimatePresence>
-          {orders.map((order) => (
-            <motion.div
-              key={order._id}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -20 }}
-              className="order-item"
-            >
-              <div className="order-row">
-                <LiveOrder order={order} />
-              </div>
-            </motion.div>
-          ))}
-        </AnimatePresence>
+        <div className="orders-list">
+          <AnimatePresence>
+            {orders.map((order) => (
+              <motion.div
+                key={order._id}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -20 }}
+                className="order-item"
+              >
+                <div className="order-row">
+                  <LiveOrder order={order} />
+                </div>
+              </motion.div>
+            ))}
+          </AnimatePresence>
+        </div>
       </div>
     </div>
   );

@@ -1,0 +1,407 @@
+/* Variables y estilos base */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.85);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 1rem;
+  z-index: 1000;
+  backdrop-filter: blur(5px);
+}
+
+.transfer-modal {
+  background: linear-gradient(135deg, #2d3436 0%, #000000 100%);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 24px;
+  width: 100%;
+  max-width: 600px;
+  max-height: 90vh;
+  overflow-y: auto;
+  color: #ffffff;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+}
+
+/* Header del modal */
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1.5rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.modal-header h2 {
+  font-size: 1.5rem;
+  margin: 0;
+  background: linear-gradient(135deg, #4834d4 0%, #686de0 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.close-button {
+  background: none;
+  border: none;
+  color: rgba(255, 255, 255, 0.5);
+  cursor: pointer;
+  padding: 0.5rem;
+  font-size: 1.2rem;
+  border-radius: 50%;
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s ease;
+}
+
+.close-button:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: #ffffff;
+  transform: rotate(90deg);
+}
+
+/* Sección de dirección de billetera */
+.wallet-address-section {
+  padding: 1.5rem;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 16px;
+  margin: 1rem;
+}
+
+.section-header {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+}
+
+.section-header h3 {
+  margin: 0;
+  font-size: 1rem;
+  color: rgba(255, 255, 255, 0.9);
+}
+
+.section-icon {
+  color: #8257e6;
+}
+
+.address-container {
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 12px;
+  padding: 0.75rem 1rem;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 0.5rem;
+}
+
+.address {
+  font-family: monospace;
+  color: #ffffff;
+  font-size: 0.9rem;
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.copy-button {
+  background: none;
+  border: none;
+  color: rgba(255, 255, 255, 0.5);
+  cursor: pointer;
+  padding: 0.5rem;
+  border-radius: 8px;
+  transition: all 0.2s ease;
+}
+
+.copy-button:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: #ffffff;
+}
+
+.copy-button.copied {
+  color: #4caf50;
+}
+
+.address-note {
+  color: rgba(255, 255, 255, 0.5);
+  font-size: 0.8rem;
+  margin-top: 0.5rem;
+}
+
+/* Cuerpo del modal */
+.modal-body {
+  padding: 1.5rem;
+}
+
+/* Selector de moneda */
+.currency-selector {
+  margin-bottom: 1.5rem;
+}
+
+.currency-selector label {
+  display: block;
+  margin-bottom: 0.75rem;
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 0.9rem;
+}
+
+.currency-options {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.currency-option {
+  display: flex;
+  align-items: center;
+  padding: 1rem;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.currency-option:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.currency-option.selected {
+  background: rgba(130, 87, 230, 0.2);
+  border-color: #8257e6;
+}
+
+.currency-option img {
+  width: 24px;
+  height: 24px;
+  margin-right: 1rem;
+}
+
+.currency-info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.currency-name {
+  font-weight: 500;
+  color: #ffffff;
+}
+
+.currency-balance {
+  font-size: 0.8rem;
+  color: rgba(255, 255, 255, 0.7);
+}
+
+/* Grupos de input */
+.input-group {
+  margin-bottom: 1.5rem;
+}
+
+.input-group label {
+  display: block;
+  margin-bottom: 0.75rem;
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 0.9rem;
+}
+
+.input-container {
+  position: relative;
+}
+
+.address-input,
+.amount-input {
+  width: 100%;
+  padding: 1rem;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  color: #ffffff;
+  font-size: 1rem;
+  transition: all 0.3s ease;
+}
+
+.address-input:focus,
+.amount-input:focus {
+  outline: none;
+  border-color: #8257e6;
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.amount-input-container {
+  position: relative;
+  margin-bottom: 0.5rem;
+}
+
+.currency-label {
+  position: absolute;
+  right: 1rem;
+  top: 50%;
+  transform: translateY(-50%);
+  color: rgba(255, 255, 255, 0.5);
+}
+
+.available-balance {
+  display: block;
+  font-size: 0.8rem;
+  color: rgba(255, 255, 255, 0.5);
+  margin-top: 0.5rem;
+}
+
+/* Mensaje de error */
+.error-message {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 1rem;
+  background: rgba(255, 59, 48, 0.1);
+  border-radius: 12px;
+  color: #ff3b30;
+  margin-bottom: 1.5rem;
+}
+
+/* Footer del modal */
+.modal-footer {
+  padding: 1.5rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  display: flex;
+  justify-content: flex-end;
+}
+
+.confirm-button {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 1rem 2rem;
+  background: linear-gradient(135deg, #6c5ce7 0%, #a363d9 100%);
+  border: none;
+  border-radius: 12px;
+  color: #ffffff;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.confirm-button:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(108, 92, 231, 0.4);
+}
+
+.confirm-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Confirmación */
+.transfer-confirmation {
+  padding: 2rem;
+  text-align: center;
+}
+
+.success-icon-container {
+  width: 64px;
+  height: 64px;
+  background: rgba(76, 175, 80, 0.1);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 1.5rem;
+}
+
+.success-icon {
+  font-size: 2rem;
+  color: #4caf50;
+}
+
+.confirmation-details {
+  margin-top: 2rem;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 16px;
+  padding: 1.5rem;
+}
+
+.confirmation-item {
+  display: flex;
+  justify-content: space-between;
+  padding: 0.75rem 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.confirmation-item:last-child {
+  border-bottom: none;
+}
+
+.confirmation-item .label {
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.confirmation-item .value {
+  font-weight: 500;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .modal-overlay {
+    padding: 0.5rem;
+  }
+
+  .transfer-modal {
+    border-radius: 16px;
+  }
+
+  .modal-header {
+    padding: 1rem;
+  }
+
+  .wallet-address-section {
+    margin: 0.75rem;
+    padding: 1rem;
+  }
+
+  .modal-body {
+    padding: 1rem;
+  }
+
+  .currency-option {
+    padding: 0.75rem;
+  }
+
+  .confirm-button {
+    width: 100%;
+    justify-content: center;
+  }
+}
+
+@media (max-width: 480px) {
+  .modal-header h2 {
+    font-size: 1.2rem;
+  }
+
+  .address {
+    font-size: 0.8rem;
+  }
+
+  .currency-option img {
+    width: 20px;
+    height: 20px;
+  }
+
+  .confirmation-details {
+    padding: 1rem;
+  }
+
+  .confirmation-item {
+    flex-direction: column;
+    gap: 0.25rem;
+  }
+
+  .confirmation-item .value {
+    word-break: break-all;
+  }
+}

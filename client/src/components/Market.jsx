@@ -1,11 +1,7 @@
-import React, { useState, useEffect } from "react";
-
-import axios from "axios";
-
+import React, { useState, useEffect, useCallback, memo, useRef } from "react";
 import { useNavigate } from "react-router-dom";
-
-import { motion, AnimatePresence } from "framer-motion";
-
+import { motion } from "framer-motion";
+import axiosInstance from "../utils/axiosConfig";
 import {
   FaWallet,
   FaExchangeAlt,
@@ -19,276 +15,266 @@ import {
 
 import "../styles/pages/market.css";
 
-const Market = () => {
-  const [cryptocurrencies, setCryptocurrencies] = useState([]);
+// Datos de respaldo
+const fallbackData = [
+  {
+    id: "bitcoin",
+    symbol: "btc",
+    name: "Bitcoin",
+    image: "https://assets.coingecko.com/coins/images/1/large/bitcoin.png",
+    current_price: 35000,
+    price_change_percentage_24h: 2.5,
+  },
+  {
+    id: "ethereum",
+    symbol: "eth",
+    name: "Ethereum",
+    image: "https://assets.coingecko.com/coins/images/279/large/ethereum.png",
+    current_price: 2000,
+    price_change_percentage_24h: 1.8,
+  },
+];
 
-  const [loading, setLoading] = useState(true);
+// Componentes memorizados para prevenir re-renders innecesarios
+const PriceDisplay = memo(({ price }) => {
+  const formattedPrice =
+    typeof price === "number"
+      ? price.toLocaleString("en-US", {
+          minimumFractionDigits: 2,
+          maximumFractionDigits: 6,
+        })
+      : "0.00";
 
-  const [error, setError] = useState(null);
+  return <div className="crypto-price">${formattedPrice}</div>;
+});
 
-  const [priceVariations, setPriceVariations] = useState({});
+const PercentageChange = memo(({ percentage }) => {
+  const isPositive = percentage > 0;
+  return (
+    <div className={`crypto-change ${isPositive ? "positive" : "negative"}`}>
+      {isPositive ? <FaArrowUp size={12} /> : <FaArrowDown size={12} />}
+      {Math.abs(percentage).toFixed(2)}%
+    </div>
+  );
+});
 
-  const navigate = useNavigate();
-
-  // Función para generar variación de precio aleatoria
-
-  const generatePriceVariation = (basePrice) => {
-    const variation = (Math.random() - 0.5) * 0.0001; // Genera una variación pequeña
-
-    return basePrice + variation;
-  };
-
-  // Efecto para actualizar las variaciones de precio
-
-  useEffect(() => {
-    if (cryptocurrencies.length > 0) {
-      const variations = {};
-
-      cryptocurrencies.forEach((crypto) => {
-        variations[crypto.id] = crypto.current_price;
-      });
-
-      setPriceVariations(variations);
-
-      const interval = setInterval(() => {
-        setPriceVariations((prev) => {
-          const newVariations = { ...prev };
-
-          Object.keys(newVariations).forEach((cryptoId) => {
-            newVariations[cryptoId] = generatePriceVariation(
-              newVariations[cryptoId]
-            );
-          });
-
-          return newVariations;
-        });
-      }, 100); // Actualiza cada 100ms
-
-      return () => clearInterval(interval);
-    }
-  }, [cryptocurrencies]);
-
-  useEffect(() => {
-    const fetchCryptoPrices = async () => {
-      try {
-        setLoading(true);
-
-        setError(null);
-
-        const response = await axios.get(
-          "http://localhost:5000/api/crypto-data"
-        );
-
-        setCryptocurrencies(response.data);
-      } catch (error) {
-        console.error("Error fetching crypto data:", error);
-
-        setError(
-          "No se pudo cargar la información de las criptomonedas. Por favor, intenta de nuevo más tarde."
-        );
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchCryptoPrices();
-
-    const interval = setInterval(fetchCryptoPrices, 60000);
-
-    return () => clearInterval(interval);
-  }, []);
-
-  const handleCryptoSelect = (crypto) => {
-    navigate(`/crypto/${crypto.id}`);
-  };
-
-  const formatPrice = (price) => {
-    if (typeof price !== "number") return "0.0000";
-
-    return price.toFixed(4);
-  };
-
-  if (loading)
-    return (
-      <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        className="loading"
-      />
-    );
-
-  if (error)
-    return (
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="error-message"
-      >
-        {error}
-      </motion.div>
-    );
-
+const CryptoItem = memo(({ crypto, onSelect, priceVariation }) => {
   return (
     <motion.div
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      className="market-container"
+      className="crypto-item"
+      initial={{ opacity: 0, x: -20 }}
+      animate={{ opacity: 1, x: 0 }}
+      transition={{ duration: 0.3 }}
+      onClick={() => onSelect(crypto)}
+      layout
     >
-      {/* Top Cryptos Section */}
+      <img
+        src={crypto.image}
+        alt={crypto.name}
+        className="crypto-icon"
+        onError={(e) => {
+          e.target.onerror = null;
+          e.target.src = "/fallback-crypto-icon.png";
+        }}
+      />
+      <div className="crypto-info">
+        <div className="crypto-symbol">{crypto.symbol.toUpperCase()}/USDT</div>
+        <PriceDisplay price={priceVariation || crypto.current_price} />
+        <PercentageChange percentage={crypto.price_change_percentage_24h} />
+      </div>
+    </motion.div>
+  );
+});
 
+const TopCryptoItem = memo(({ crypto, priceVariation }) => {
+  return (
+    <motion.div
+      className="top-crypto-item"
+      initial={{ opacity: 0, y: -20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.3 }}
+      layout
+    >
+      <div className="crypto-symbol">{crypto.symbol.toUpperCase()}/USDT</div>
+      <PriceDisplay price={priceVariation || crypto.current_price} />
+      <PercentageChange percentage={crypto.price_change_percentage_24h} />
+    </motion.div>
+  );
+});
+
+const QuickActionButton = memo(({ icon: Icon, text, onClick, className }) => (
+  <motion.button
+    className={`action-button ${className}`}
+    onClick={onClick}
+    whileHover={{ scale: 1.02 }}
+    whileTap={{ scale: 0.98 }}
+  >
+    <div className="button-content">
+      <Icon className="action-icon" />
+      <span>{text}</span>
+    </div>
+  </motion.button>
+));
+const Market = () => {
+  const [cryptocurrencies, setCryptocurrencies] = useState(fallbackData);
+  const [loading, setLoading] = useState(true);
+  const [priceVariations, setPriceVariations] = useState({});
+  const [retryCount, setRetryCount] = useState(0);
+  const priceUpdateInterval = useRef(null);
+  const navigate = useNavigate();
+
+  // Función para generar variación de precio con menos volatilidad
+  const generatePriceVariation = useCallback((basePrice) => {
+    const variation = (Math.random() - 0.5) * 0.00001;
+    return Number((basePrice * (1 + variation)).toFixed(4));
+  }, []);
+
+  // Fetch de datos iniciales
+  const fetchCryptoPrices = useCallback(async () => {
+    try {
+      const token = localStorage.getItem("token");
+      if (!token) {
+        setLoading(false);
+        return;
+      }
+
+      const response = await axiosInstance.get("/crypto-data");
+      if (response.data && response.data.length > 0) {
+        setCryptocurrencies(response.data);
+        // Inicializar variaciones de precio
+        const initialVariations = {};
+        response.data.forEach((crypto) => {
+          initialVariations[crypto.id] = crypto.current_price;
+        });
+        setPriceVariations(initialVariations);
+        setRetryCount(0);
+      }
+    } catch (error) {
+      console.warn("Using fallback data:", error.message);
+      if (retryCount < 3) {
+        setTimeout(() => {
+          setRetryCount((prev) => prev + 1);
+        }, 5000 * Math.pow(2, retryCount));
+      }
+    } finally {
+      setLoading(false);
+    }
+  }, [retryCount]);
+
+  // Efecto para actualizar solo los precios
+  useEffect(() => {
+    if (cryptocurrencies.length > 0) {
+      priceUpdateInterval.current = setInterval(() => {
+        setPriceVariations((prev) => {
+          const newVariations = { ...prev };
+          Object.keys(newVariations).forEach((cryptoId) => {
+            const currentPrice = newVariations[cryptoId];
+            newVariations[cryptoId] = generatePriceVariation(currentPrice);
+          });
+          return newVariations;
+        });
+      }, 2000); // Actualización cada 2 segundos para reducir la carga
+    }
+
+    return () => {
+      if (priceUpdateInterval.current) {
+        clearInterval(priceUpdateInterval.current);
+      }
+    };
+  }, [cryptocurrencies, generatePriceVariation]);
+
+  // Efecto para datos iniciales y actualizaciones periódicas
+  useEffect(() => {
+    fetchCryptoPrices();
+    const dataInterval = setInterval(fetchCryptoPrices, 60000); // Actualizar datos completos cada minuto
+
+    return () => clearInterval(dataInterval);
+  }, [fetchCryptoPrices]);
+
+  const handleCryptoSelect = useCallback(
+    (crypto) => {
+      navigate(`/crypto/${crypto.id}`);
+    },
+    [navigate]
+  );
+
+  if (loading) {
+    return (
+      <div className="market-container">
+        <div className="loading-skeleton">
+          {[1, 2, 3].map((i) => (
+            <div key={i} className="skeleton-item" />
+          ))}
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="market-page-container">
       <motion.div
-        initial={{ opacity: 0, y: -20 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="top-cryptos"
-      >
-        {cryptocurrencies.slice(0, 3).map((crypto, index) => (
-          <motion.div
-            key={crypto.id}
-            className="top-crypto-item"
-            initial={{ opacity: 0, x: -20 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ delay: index * 0.1 }}
-            whileHover={{ scale: 1.02 }}
-            whileTap={{ scale: 0.98 }}
-            onClick={() => handleCryptoSelect(crypto)}
-          >
-            <motion.div
-              className="crypto-symbol"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-            >
-              {crypto.symbol.toUpperCase()}/USDT
-            </motion.div>
-
-            <motion.div
-              className="crypto-price"
-              initial={{ scale: 0.5 }}
-              animate={{ scale: 1 }}
-            >
-              ${formatPrice(priceVariations[crypto.id] || crypto.current_price)}
-            </motion.div>
-
-            <motion.div
-              className={`crypto-change ${
-                crypto.price_change_percentage_24h > 0 ? "positive" : "negative"
-              }`}
-            >
-              {crypto.price_change_percentage_24h > 0 ? (
-                <FaArrowUp size={12} />
-              ) : (
-                <FaArrowDown size={12} />
-              )}
-              {Math.abs(crypto.price_change_percentage_24h).toFixed(2)}%
-            </motion.div>
-          </motion.div>
-        ))}
-      </motion.div>
-
-      {/* Quick Actions */}
-
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.2 }}
-        className="quick-actions"
-      >
-        <motion.button
-          whileHover={{ scale: 1.05 }}
-          whileTap={{ scale: 0.95 }}
-          className="action-button deposit"
-        >
-          <div className="button-content">
-            <FaDeposit className="action-icon" />
-
-            <span>Depositar</span>
-          </div>
-        </motion.button>
-
-        <motion.button
-          whileHover={{ scale: 1.05 }}
-          whileTap={{ scale: 0.95 }}
-          className="action-button withdraw"
-        >
-          <div className="button-content">
-            <FaExchangeAlt className="action-icon" />
-
-            <span>Retirar</span>
-          </div>
-        </motion.button>
-
-        <motion.button
-          whileHover={{ scale: 1.05 }}
-          whileTap={{ scale: 0.95 }}
-          className="action-button support"
-        >
-          <div className="button-content">
-            <FaPhoneAlt className="action-icon" />
-
-            <span>Soporte</span>
-          </div>
-        </motion.button>
-      </motion.div>
-
-      {/* Crypto List */}
-
-      <motion.div
-        className="crypto-list"
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
-        transition={{ delay: 0.3 }}
+        className="market-container"
       >
-        <AnimatePresence>
-          {cryptocurrencies.map((crypto, index) => (
-            <motion.div
+        {/* Top Cryptos Section */}
+        <motion.div className="top-cryptos">
+          {cryptocurrencies.slice(0, 3).map((crypto) => (
+            <TopCryptoItem
               key={crypto.id}
-              className="crypto-item"
-              initial={{ opacity: 0, x: -20 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: 20 }}
-              transition={{ delay: index * 0.05 }}
-              whileHover={{ x: 5 }}
-              onClick={() => handleCryptoSelect(crypto)}
-            >
-              <motion.img
-                src={crypto.image}
-                alt={crypto.name}
-                className="crypto-icon"
-                whileHover={{ scale: 1.1 }}
-                whileTap={{ scale: 0.9 }}
-              />
-
-              <div className="crypto-info">
-                <div className="crypto-symbol">
-                  {crypto.symbol.toUpperCase()}/USDT
-                </div>
-
-                <div className="crypto-price">
-                  $
-                  {formatPrice(
-                    priceVariations[crypto.id] || crypto.current_price
-                  )}
-                </div>
-
-                <motion.div
-                  className={`crypto-change ${
-                    crypto.price_change_percentage_24h > 0
-                      ? "positive"
-                      : "negative"
-                  }`}
-                >
-                  {crypto.price_change_percentage_24h > 0 ? (
-                    <FaArrowUp size={12} />
-                  ) : (
-                    <FaArrowDown size={12} />
-                  )}
-                  {Math.abs(crypto.price_change_percentage_24h).toFixed(2)}%
-                </motion.div>
-              </div>
-            </motion.div>
+              crypto={crypto}
+              priceVariation={priceVariations[crypto.id]}
+            />
           ))}
-        </AnimatePresence>
+        </motion.div>
+
+        {/* Quick Actions */}
+        <div className="quick-actions">
+          <QuickActionButton
+            icon={FaDeposit}
+            text="Depositar"
+            className="deposit"
+            onClick={() => navigate("/wallet")}
+          />
+          <QuickActionButton
+            icon={FaExchangeAlt}
+            text="Retirar"
+            className="withdraw"
+            onClick={() => navigate("/wallet")}
+          />
+          <QuickActionButton
+            icon={FaPhoneAlt}
+            text="Soporte"
+            className="support"
+            onClick={() => navigate("/support")}
+          />
+        </div>
+
+        {/* Crypto List */}
+        <motion.div className="crypto-list" layout>
+          {cryptocurrencies.map((crypto) => (
+            <CryptoItem
+              key={crypto.id}
+              crypto={crypto}
+              onSelect={handleCryptoSelect}
+              priceVariation={priceVariations[crypto.id]}
+            />
+          ))}
+        </motion.div>
+
+        {/* Notification for API limits */}
+        {retryCount > 0 && (
+          <motion.div
+            initial={{ opacity: 0, y: 50 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 50 }}
+            className="floating-info"
+          >
+            Actualizando datos...
+          </motion.div>
+        )}
       </motion.div>
-    </motion.div>
+    </div>
   );
 };
 

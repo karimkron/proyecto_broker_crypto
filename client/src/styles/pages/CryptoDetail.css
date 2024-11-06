@@ -1,6 +1,7 @@
 .crypto-detail {
   height: 100vh;
   width: 100%;
+  max-width: 100vw;
   color: #ffffff;
   font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
     sans-serif;
@@ -20,7 +21,6 @@
   top: 1rem;
   left: 1rem;
   cursor: pointer;
-  font-size: 1.25rem;
   z-index: 10;
   width: 32px;
   height: 32px;
@@ -30,6 +30,12 @@
   background: rgba(255, 255, 255, 0.1);
   border: 1px solid rgba(255, 255, 255, 0.2);
   border-radius: 50%;
+  transition: all 0.3s ease;
+}
+
+.back-arrow:hover {
+  background: rgba(255, 255, 255, 0.2);
+  transform: scale(1.1);
 }
 
 .header {
@@ -39,44 +45,52 @@
   align-items: center;
   height: 60px;
   width: 100%;
+  background: rgba(26, 31, 44, 0.98);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .header h1 {
   font-size: 1.25rem;
   font-weight: 600;
   margin: 0;
-  margin-left: 10px;
   color: #fff;
 }
 
 .crypto-info {
   display: flex;
-  flex-direction: row;
   align-items: center;
-  gap: 0.5rem;
+  gap: 1rem;
 }
 
-.crypto-info p {
-  font-size: 1rem;
-  margin: 0;
-  padding: 0.25rem 0.5rem;
+.crypto-price {
+  font-size: 1.1rem;
+  font-weight: 600;
+  padding: 0.25rem 0.75rem;
   border-radius: 8px;
   background: rgba(255, 255, 255, 0.1);
-  white-space: nowrap;
-  margin-left: auto;
+  transition: all 0.3s ease;
+}
+
+.crypto-price-increase {
+  color: #2ecc71;
+  background: rgba(46, 204, 113, 0.15);
+}
+
+.crypto-price-decrease {
+  color: #e74c3c;
+  background: rgba(231, 76, 60, 0.15);
 }
 
 .main-content {
-  flex: 3;
+  flex: 1;
   display: flex;
   flex-direction: column;
-  height: auto;
-  width: 100%;
-  padding: 0;
+  min-height: 0;
+  height: calc(100vh - 60px);
 }
 
 .chart-container {
-  flex: 1;
+  flex: 1.5;
   min-height: 0;
   padding: 0.5rem;
   display: flex;
@@ -86,14 +100,14 @@
 
 .time-range-buttons {
   display: flex;
-  overflow-x: auto;
   padding: 0.5rem;
   gap: 0.5rem;
-  scrollbar-width: none;
-  -ms-overflow-style: none;
   background: rgba(26, 31, 44, 0.98);
   border-radius: 8px;
   margin-bottom: 0.5rem;
+  overflow-x: auto;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
 }
 
 .time-range-buttons::-webkit-scrollbar {
@@ -108,86 +122,78 @@
   border-radius: 6px;
   cursor: pointer;
   font-size: 0.875rem;
-  width: 50px;
-  flex-shrink: 0;
+  min-width: 50px;
+  transition: all 0.3s ease;
 }
 
 .time-range-buttons button.active {
   background: rgba(72, 52, 212, 0.6);
 }
 
+.time-range-buttons button:hover {
+  background: rgba(72, 52, 212, 0.4);
+}
+
 .trade-section {
   flex: 1;
   background: rgba(26, 31, 44, 0.98);
-  position: relative;
-  padding-bottom: 60px;
-  border-top: 1px solid rgba(255, 255, 255, 0.1);
   display: flex;
   flex-direction: column;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  min-height: 0;
+  position: relative;
+}
+
+.simulated-orders {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  overflow: hidden;
 }
 
 .title-orders {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
-  padding: 8px 4px;
+  padding: 0.75rem 1rem;
   font-size: 0.75rem;
   color: rgba(255, 255, 255, 0.6);
+  background: rgba(26, 31, 44, 0.98);
   border-bottom: 1px solid rgba(255, 255, 255, 0.1);
   position: sticky;
   top: 0;
-  background: rgba(26, 31, 44, 0.98);
   z-index: 2;
 }
 
-.title-orders p {
-  margin: 0;
-  text-align: center;
-  padding: 0 4px;
-}
-
-.simulated-orders {
+.orders-container {
   flex: 1;
   overflow-y: auto;
   scrollbar-width: none;
   -ms-overflow-style: none;
-  display: flex;
-  flex-direction: column;
+  padding: 0.5rem;
 }
 
-.simulated-orders::-webkit-scrollbar {
+.orders-container::-webkit-scrollbar {
   display: none;
 }
 
-.simulated-orders table {
-  width: 100%;
-  border-collapse: separate;
-  border-spacing: 0 4px;
-}
-
-.orders-position tr {
+.order-row {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
   text-align: center;
+  padding: 0.5rem;
   font-size: 0.75rem;
-  padding: 4px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
 }
 
-.orders-position td {
-  padding: 4px;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  min-width: 0;
+.order-row:last-child {
+  border-bottom: none;
 }
 
 .trade-buttons {
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  right: 0;
   display: flex;
   gap: 0.5rem;
-  padding: 8px;
+  padding: 0.75rem;
   background: rgba(26, 31, 44, 0.98);
   border-top: 1px solid rgba(255, 255, 255, 0.1);
 }
@@ -202,14 +208,23 @@
   font-weight: 600;
   font-size: 0.875rem;
   cursor: pointer;
+  transition: all 0.3s ease;
 }
 
 .buy-button {
   background: #2ecc71;
 }
 
+.buy-button:hover {
+  background: #27ae60;
+}
+
 .sell-button {
   background: #e74c3c;
+}
+
+.sell-button:hover {
+  background: #c0392b;
 }
 
 .positive {
@@ -223,9 +238,10 @@
 .custom-tooltip {
   background: rgba(26, 31, 44, 0.98);
   border: 1px solid rgba(255, 255, 255, 0.2);
-  padding: 0.5rem;
-  border-radius: 6px;
+  padding: 0.75rem;
+  border-radius: 8px;
   font-size: 0.75rem;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
 }
 
 .custom-tooltip p {
@@ -234,41 +250,90 @@
 }
 
 .loading {
-  height: 100vh;
+  height: 100%;
   width: 100%;
   display: flex;
   align-items: center;
   justify-content: center;
-  background: rgb(26, 31, 44);
 }
 
-.error-message {
-  height: 100vh;
-  width: 100%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 1rem;
-  text-align: center;
-  background: rgb(26, 31, 44);
+.loading-icon {
+  font-size: 2rem;
+  animation: spin 1s linear infinite;
 }
 
-@media (max-width: 360px) {
-  .orders-position tr {
-    font-size: 0.7rem;
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media screen and (max-width: 768px) {
+  .header {
+    padding: 0.75rem;
   }
 
-  .title-orders p {
+  .crypto-info {
+    gap: 0.5rem;
+  }
+
+  .crypto-price {
+    font-size: 1rem;
+  }
+
+  .time-range-buttons button {
+    padding: 0.4rem 0.8rem;
+    font-size: 0.8rem;
+  }
+
+  .title-orders,
+  .order-row {
     font-size: 0.7rem;
+  }
+}
+
+@media screen and (max-width: 480px) {
+  .header h1 {
+    font-size: 1rem;
+  }
+
+  .crypto-price {
+    font-size: 0.9rem;
+    padding: 0.2rem 0.5rem;
   }
 
   .trade-buttons {
-    padding: 6px;
+    padding: 0.5rem;
   }
 
   .buy-button,
   .sell-button {
-    padding: 0.5rem;
+    padding: 0.6rem;
     font-size: 0.8rem;
+  }
+
+  .order-row {
+    padding: 0.4rem;
+  }
+}
+
+@media screen and (max-height: 600px) {
+  .header {
+    height: 50px;
+  }
+
+  .main-content {
+    height: calc(100vh - 50px);
+  }
+
+  .chart-container {
+    flex: 1;
+  }
+
+  .trade-section {
+    flex: 1;
   }
 }

@@ -1,6 +1,9 @@
-import React, { useState, useEffect } from "react";
-import axios from "axios";
+// ====== IMPORTACIONES ======
+import React, { useState, useEffect, useCallback } from "react";
+import axiosInstance from "../utils/axiosConfig.js";
 import { motion, AnimatePresence } from "framer-motion";
+
+// Iconos
 import {
   FaWallet,
   FaExchangeAlt,
@@ -14,127 +17,70 @@ import {
   FaDollarSign,
   FaEuroSign,
   FaChevronRight,
+  FaArrowRight,
   FaPlus,
   FaMinus,
   FaExclamationTriangle,
+  FaHistory,
 } from "react-icons/fa";
+
+// Componentes
 import ExchangeModal from "./ExchangeModal";
+import TransferModal from "./modalTransferencias.jsx";
+import TransactionHistory from "./TransactionHistory";
+
+// Estilos
 import "../styles/pages/wallet.css";
 
+// Constantes
 const CACHE_DURATION = 120000; // 2 minutos
+const REFRESH_INTERVAL = 10000; // 10 segundos
+
+const initialBalances = {
+  EUR: { available: 0, frozen: 0 },
+  USDT: {
+    available: 0,
+    frozen: 0,
+    image: "https://assets.coingecko.com/coins/images/325/small/Tether.png",
+  },
+  BTC: { available: 0, frozen: 0, image: "" },
+  ETH: { available: 0, frozen: 0, image: "" },
+};
 
 const Wallet = () => {
-  const [balances, setBalances] = useState({
-    EUR: { available: 0, frozen: 0 },
-    USDT: {
-      available: 0,
-      frozen: 0,
-      image: "https://assets.coingecko.com/coins/images/325/small/Tether.png",
-    },
-    BTC: { available: 0, frozen: 0, image: "" },
-    ETH: { available: 0, frozen: 0, image: "" },
-  });
-
+  // ====== ESTADOS ======
+  const [balances, setBalances] = useState(initialBalances);
   const [totalAssetsEUR, setTotalAssetsEUR] = useState(0);
   const [totalAssetsUSDT, setTotalAssetsUSDT] = useState(0);
   const [error, setError] = useState(null);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [selectedCurrency, setSelectedCurrency] = useState(null);
-  const [showDetails, setShowDetails] = useState(false);
   const [loadingProgress, setLoadingProgress] = useState(0);
+  const [showTransactionHistoryModal, setShowTransactionHistoryModal] =
+    useState(false);
   const [showExchangeModal, setShowExchangeModal] = useState(false);
+  const [showTransferModal, setShowTransferModal] = useState(false);
 
-  // Función para formatear monedas con decimales específicos por tipo
-  const formatCurrency = (value, currency) => {
-    let decimals;
-    if (currency === "EUR" || currency === "USDT") {
-      decimals = 2;
-    } else {
-      decimals = 8;
-    }
+  // ====== FUNCIONES AUXILIARES ======
+  const formatCurrency = useCallback((value, currency) => {
+    const decimals = currency === "EUR" || currency === "USDT" ? 2 : 8;
     return new Intl.NumberFormat("en-US", {
       minimumFractionDigits: decimals,
       maximumFractionDigits: decimals,
     }).format(value);
-  };
-
-  useEffect(() => {
-    const fetchWalletData = async () => {
-      try {
-        const token = localStorage.getItem("token");
-        const response = await axios.get("http://localhost:5000/api/wallet", {
-          headers: { Authorization: `Bearer ${token}` },
-          onDownloadProgress: (progressEvent) => {
-            const percentage =
-              (progressEvent.loaded * 100) / progressEvent.total;
-            setLoadingProgress(percentage);
-          },
-        });
-
-        console.log("Wallet data response:", response.data); // Para debug
-
-        const { balanceEUR, balanceUSDT, balanceBTC, balanceETH } =
-          response.data;
-        setBalances((prevBalances) => ({
-          ...prevBalances,
-          EUR: { ...prevBalances.EUR, available: balanceEUR || 0 },
-          USDT: { ...prevBalances.USDT, available: balanceUSDT || 0 },
-          BTC: { ...prevBalances.BTC, available: balanceBTC || 0 },
-          ETH: { ...prevBalances.ETH, available: balanceETH || 0 },
-        }));
-        setTotalAssetsEUR(balanceEUR || 0);
-        setTotalAssetsUSDT(balanceUSDT || 0);
-      } catch (error) {
-        console.error("Error fetching wallet data:", error);
-        setError(
-          "No se pudo cargar la información de la billetera. Por favor, intenta de nuevo más tarde."
-        );
-      }
-    };
-
-    const fetchCryptoData = async () => {
-      try {
-        const cachedData = localStorage.getItem("cryptoData");
-        const cachedTimestamp = localStorage.getItem("cryptoDataTimestamp");
-
-        if (
-          cachedData &&
-          cachedTimestamp &&
-          Date.now() - parseInt(cachedTimestamp) < CACHE_DURATION
-        ) {
-          updateBalances(JSON.parse(cachedData));
-          return;
-        }
-
-        const response = await axios.get(
-          "http://localhost:5000/api/crypto-data"
-        );
-        const data = response.data;
-
-        localStorage.setItem("cryptoData", JSON.stringify(data));
-        localStorage.setItem("cryptoDataTimestamp", Date.now().toString());
-
-        updateBalances(data);
-      } catch (error) {
-        console.error("Error fetching crypto data:", error);
-        setError(
-          "No se pudo cargar la información de las criptomonedas. Por favor, intenta de nuevo más tarde."
-        );
-      }
-    };
-
-    fetchWalletData();
-    fetchCryptoData();
-
-    const interval = setInterval(() => {
-      fetchWalletData();
-      fetchCryptoData();
-    }, CACHE_DURATION);
-
-    return () => clearInterval(interval);
   }, []);
 
-  const updateBalances = (data) => {
+  const getCurrencyIcon = useCallback((currency) => {
+    const icons = {
+      BTC: <FaBitcoin className="currency-icon bitcoin" />,
+      ETH: <FaEthereum className="currency-icon ethereum" />,
+      EUR: <FaEuroSign className="currency-icon euro" />,
+      USDT: <FaDollarSign className="currency-icon tether" />,
+    };
+    return icons[currency] || null;
+  }, []);
+
+  const updateBalances = useCallback((data) => {
     setBalances((prevBalances) => {
       const updatedBalances = { ...prevBalances };
       data.forEach((crypto) => {
@@ -145,21 +91,20 @@ const Wallet = () => {
       });
       return updatedBalances;
     });
-  };
+  }, []);
 
-  const handleRefresh = async () => {
-    setIsRefreshing(true);
+  // ====== FUNCIONES DE API ======
+  const fetchWalletData = useCallback(async () => {
     try {
-      const token = localStorage.getItem("token");
-      const [walletResponse, cryptoResponse] = await Promise.all([
-        axios.get("http://localhost:5000/api/wallet", {
-          headers: { Authorization: `Bearer ${token}` },
-        }),
-        axios.get("http://localhost:5000/api/crypto-data"),
-      ]);
+      const response = await axiosInstance.get("/wallet", {
+        onDownloadProgress: (progressEvent) => {
+          const percentage = (progressEvent.loaded * 100) / progressEvent.total;
+          setLoadingProgress(percentage);
+        },
+      });
 
-      const { balanceEUR, balanceUSDT, balanceBTC, balanceETH } =
-        walletResponse.data;
+      const { balanceEUR, balanceUSDT, balanceBTC, balanceETH } = response.data;
+
       setBalances((prevBalances) => ({
         ...prevBalances,
         EUR: { ...prevBalances.EUR, available: balanceEUR || 0 },
@@ -167,22 +112,67 @@ const Wallet = () => {
         BTC: { ...prevBalances.BTC, available: balanceBTC || 0 },
         ETH: { ...prevBalances.ETH, available: balanceETH || 0 },
       }));
+
       setTotalAssetsEUR(balanceEUR || 0);
       setTotalAssetsUSDT(balanceUSDT || 0);
+    } catch (error) {
+      console.error("Error fetching wallet data:", error);
+      handleApiError(error);
+    }
+  }, []);
 
-      updateBalances(cryptoResponse.data);
+  const fetchCryptoData = useCallback(async () => {
+    try {
+      const cachedData = localStorage.getItem("cryptoData");
+      const cachedTimestamp = localStorage.getItem("cryptoDataTimestamp");
+
+      if (
+        cachedData &&
+        cachedTimestamp &&
+        Date.now() - parseInt(cachedTimestamp) < CACHE_DURATION
+      ) {
+        updateBalances(JSON.parse(cachedData));
+        return;
+      }
+
+      const response = await axiosInstance.get("/crypto-data");
+      const data = response.data;
+
+      localStorage.setItem("cryptoData", JSON.stringify(data));
+      localStorage.setItem("cryptoDataTimestamp", Date.now().toString());
+
+      updateBalances(data);
+    } catch (error) {
+      console.error("Error fetching crypto data:", error);
+      handleApiError(error);
+    }
+  }, [updateBalances]);
+
+  const handleApiError = useCallback((error) => {
+    if (error.response?.status === 401) {
+      localStorage.removeItem("token");
+      setError("Sesión expirada. Por favor, inicie sesión nuevamente.");
+      window.location.href = "/login";
+    } else {
+      setError(
+        "No se pudo cargar la información. Por favor, intente de nuevo más tarde."
+      );
+    }
+  }, []);
+  // ====== MANEJADORES DE EVENTOS ======
+  const handleRefresh = useCallback(async () => {
+    setIsRefreshing(true);
+    try {
+      await Promise.all([fetchWalletData(), fetchCryptoData()]);
     } catch (error) {
       console.error("Error refreshing data:", error);
-      setError("Error al actualizar los datos. Por favor, intenta de nuevo.");
+      handleApiError(error);
     } finally {
-      setTimeout(() => {
-        setIsRefreshing(false);
-      }, 1000);
+      setTimeout(() => setIsRefreshing(false), 1000);
     }
-  };
+  }, [fetchWalletData, fetchCryptoData, handleApiError]);
 
-  const handleExchangeComplete = (data) => {
-    console.log("Exchange complete data:", data); // Para debug
+  const handleExchangeComplete = useCallback((data) => {
     setBalances((prevBalances) => ({
       ...prevBalances,
       EUR: { ...prevBalances.EUR, available: data.newBalanceEUR || 0 },
@@ -192,23 +182,32 @@ const Wallet = () => {
     }));
     setTotalAssetsEUR(data.newBalanceEUR || 0);
     setTotalAssetsUSDT(data.newBalanceUSDT || 0);
-  };
+  }, []);
 
-  const getCurrencyIcon = (currency) => {
-    switch (currency) {
-      case "BTC":
-        return <FaBitcoin className="currency-icon bitcoin" />;
-      case "ETH":
-        return <FaEthereum className="currency-icon ethereum" />;
-      case "EUR":
-        return <FaEuroSign className="currency-icon euro" />;
-      case "USDT":
-        return <FaDollarSign className="currency-icon tether" />;
-      default:
-        return null;
+  // ====== EFECTOS ======
+  useEffect(() => {
+    const token = localStorage.getItem("token");
+    if (!token) {
+      setError("No hay sesión activa. Por favor, inicie sesión.");
+      window.location.href = "/login";
+      return;
     }
-  };
 
+    // Carga inicial de datos
+    fetchWalletData();
+    fetchCryptoData();
+
+    // Configurar intervalos de actualización
+    const walletInterval = setInterval(fetchWalletData, REFRESH_INTERVAL);
+    const cryptoInterval = setInterval(fetchCryptoData, CACHE_DURATION);
+
+    return () => {
+      clearInterval(walletInterval);
+      clearInterval(cryptoInterval);
+    };
+  }, [fetchWalletData, fetchCryptoData]);
+
+  // ====== RENDERIZADO CONDICIONAL DE ERROR ======
   if (error) {
     return (
       <motion.div
@@ -225,9 +224,11 @@ const Wallet = () => {
     );
   }
 
+  // ====== RENDERIZADO PRINCIPAL ======
   return (
     <>
       <div className="wallet-container">
+        {/* Header */}
         <motion.div
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -250,6 +251,7 @@ const Wallet = () => {
           </div>
         </motion.div>
 
+        {/* Balance Card */}
         <motion.div
           initial={{ opacity: 0, scale: 0.95 }}
           animate={{ opacity: 1, scale: 1 }}
@@ -285,42 +287,40 @@ const Wallet = () => {
           <div className="card-background-effect"></div>
         </motion.div>
 
+        {/* Quick Actions */}
         <div className="quick-actions">
-          <motion.button
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-            className="action-button deposit"
-          >
-            <div className="button-content">
-              <FaArrowDown className="action-icon" />
-              <span>Depositar</span>
-            </div>
-          </motion.button>
-
-          <motion.button
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-            className="action-button withdraw"
-          >
-            <div className="button-content">
-              <FaArrowUp className="action-icon" />
-              <span>Retirar</span>
-            </div>
-          </motion.button>
-
-          <motion.button
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-            className="action-button exchange"
+          <QuickActionButton
+            icon={<FaArrowDown />}
+            text="Depositar"
+            onClick={() => {
+              /* Implementar lógica de depósito */
+            }}
+          />
+          <QuickActionButton
+            icon={<FaArrowRight />}
+            text="Transferir"
+            onClick={() => setShowTransferModal(true)}
+          />
+          <QuickActionButton
+            icon={<FaHistory />}
+            text="Transacciones"
+            onClick={() => setShowTransactionHistoryModal(true)}
+          />
+          <QuickActionButton
+            icon={<FaArrowUp />}
+            text="Retirar"
+            onClick={() => {
+              /* Implementar lógica de retiro */
+            }}
+          />
+          <QuickActionButton
+            icon={<FaExchangeAlt />}
+            text="Intercambiar"
             onClick={() => setShowExchangeModal(true)}
-          >
-            <div className="button-content">
-              <FaExchangeAlt className="action-icon" />
-              <span>Intercambiar</span>
-            </div>
-          </motion.button>
+          />
         </div>
 
+        {/* Assets Grid */}
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
@@ -328,67 +328,22 @@ const Wallet = () => {
         >
           <AnimatePresence>
             {Object.entries(balances).map(([currency, balance], index) => (
-              <motion.div
+              <AssetCard
                 key={currency}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, scale: 0.95 }}
-                transition={{ delay: index * 0.1 }}
-                className={`asset-card ${
-                  selectedCurrency === currency ? "selected" : ""
-                }`}
-                onClick={() => setSelectedCurrency(currency)}
-                whileHover={{ scale: 1.02 }}
-              >
-                <div className="asset-card-header">
-                  {getCurrencyIcon(currency)}
-                  <h3>{currency}</h3>
-                </div>
-
-                <div className="asset-card-body">
-                  <div className="asset-amount">
-                    <span className="amount-value">
-                      {formatCurrency(balance.available, currency)}
-                    </span>
-                    <span className="amount-label">Disponible</span>
-                  </div>
-
-                  <div className="asset-details">
-                    <div className="detail-item">
-                      <span className="detail-value">
-                        {formatCurrency(balance.frozen, currency)}
-                      </span>
-                      <span className="detail-label">Bloqueado</span>
-                    </div>
-
-                    <div className="detail-item">
-                      <span className="detail-value">
-                        {formatCurrency(
-                          balance.available + balance.frozen,
-                          currency
-                        )}
-                      </span>
-                      <span className="detail-label">Total</span>
-                    </div>
-                  </div>
-                </div>
-
-                <motion.div
-                  className="asset-card-footer"
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                >
-                  <button className="action-link">
-                    Ver detalles
-                    <FaChevronRight />
-                  </button>
-                </motion.div>
-              </motion.div>
+                currency={currency}
+                balance={balance}
+                index={index}
+                isSelected={selectedCurrency === currency}
+                onSelect={setSelectedCurrency}
+                formatCurrency={formatCurrency}
+                getCurrencyIcon={getCurrencyIcon}
+              />
             ))}
           </AnimatePresence>
         </motion.div>
       </div>
 
+      {/* Modales */}
       <AnimatePresence>
         {showExchangeModal && (
           <ExchangeModal
@@ -399,9 +354,96 @@ const Wallet = () => {
             formatCurrency={formatCurrency}
           />
         )}
+        {showTransferModal && (
+          <TransferModal
+            isOpen={showTransferModal}
+            onClose={() => setShowTransferModal(false)}
+            onTransferComplete={handleExchangeComplete}
+            balances={balances}
+            formatCurrency={formatCurrency}
+          />
+        )}
+        {showTransactionHistoryModal && (
+          <TransactionHistory
+            isOpen={showTransactionHistoryModal}
+            onClose={() => setShowTransactionHistoryModal(false)}
+          />
+        )}
       </AnimatePresence>
     </>
   );
 };
+
+// Componentes auxiliares
+const QuickActionButton = ({ icon, text, onClick }) => (
+  <motion.button
+    whileHover={{ scale: 1.05 }}
+    whileTap={{ scale: 0.95 }}
+    className={`action-button ${text.toLowerCase()}`}
+    onClick={onClick}
+  >
+    <div className="button-content">
+      {icon}
+      <span>{text}</span>
+    </div>
+  </motion.button>
+);
+
+const AssetCard = ({
+  currency,
+  balance,
+  index,
+  isSelected,
+  onSelect,
+  formatCurrency,
+  getCurrencyIcon,
+}) => (
+  <motion.div
+    initial={{ opacity: 0, y: 20 }}
+    animate={{ opacity: 1, y: 0 }}
+    exit={{ opacity: 0, scale: 0.95 }}
+    transition={{ delay: index * 0.1 }}
+    className={`asset-card ${isSelected ? "selected" : ""}`}
+    onClick={() => onSelect(currency)}
+    whileHover={{ scale: 1.02 }}
+  >
+    <div className="asset-card-header">
+      {getCurrencyIcon(currency)}
+      <h3>{currency}</h3>
+    </div>
+    <div className="asset-card-body">
+      <div className="asset-amount">
+        <span className="amount-value">
+          {formatCurrency(balance.available, currency)}
+        </span>
+        <span className="amount-label">Disponible</span>
+      </div>
+      <div className="asset-details">
+        <div className="detail-item">
+          <span className="detail-value">
+            {formatCurrency(balance.frozen, currency)}
+          </span>
+          <span className="detail-label">Bloqueado</span>
+        </div>
+        <div className="detail-item">
+          <span className="detail-value">
+            {formatCurrency(balance.available + balance.frozen, currency)}
+          </span>
+          <span className="detail-label">Total</span>
+        </div>
+      </div>
+    </div>
+    <motion.div
+      className="asset-card-footer"
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+    >
+      <button className="action-link">
+        Ver detalles
+        <FaChevronRight />
+      </button>
+    </motion.div>
+  </motion.div>
+);
 
 export default Wallet;

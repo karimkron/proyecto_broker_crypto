@@ -1,9 +1,6 @@
-import React, { useState, useEffect } from "react";
-
+import React, { useState, useEffect, useCallback, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-
 import axios from "axios";
-
 import {
   ComposedChart,
   Bar,
@@ -13,210 +10,198 @@ import {
   ResponsiveContainer,
   ReferenceLine,
 } from "recharts";
-
 import { FaArrowLeft, FaChartLine } from "react-icons/fa";
-
 import { motion } from "framer-motion";
-
 import TradeModal from "./TradeModal";
-
 import "../styles/pages/CryptoDetail.css";
 
 const timeRanges = [
   { label: "1M", days: 1 / 1440 },
-
   { label: "5M", days: 5 / 1440 },
-
   { label: "30M", days: 30 / 1440 },
-
   { label: "1H", days: 1 / 24 },
-
   { label: "4H", days: 4 / 24 },
-
   { label: "1D", days: 1 },
 ];
 
+// Datos de respaldo
+const fallbackChartData = Array(24)
+  .fill(0)
+  .map((_, i) => ({
+    timestamp: Date.now() - (23 - i) * 3600000,
+    open: 35000 + Math.random() * 1000,
+    high: 36000 + Math.random() * 1000,
+    low: 34000 + Math.random() * 1000,
+    close: 35500 + Math.random() * 1000,
+  }));
+
 const CryptoDetail = () => {
   const { id } = useParams();
-
   const navigate = useNavigate();
-
   const [cryptoData, setCryptoData] = useState(null);
-
-  const [chartData, setChartData] = useState([]);
-
+  const [chartData, setChartData] = useState(fallbackChartData);
   const [loading, setLoading] = useState(true);
-
-  const [error, setError] = useState(null);
-
   const [showTradeModal, setShowTradeModal] = useState(false);
-
   const [tradeType, setTradeType] = useState("");
-
   const [selectedTimeRange, setSelectedTimeRange] = useState(timeRanges[0]);
-
   const [simulatedOrders, setSimulatedOrders] = useState([]);
-
   const [currentPrice, setCurrentPrice] = useState(null);
-
   const [priceDirection, setPriceDirection] = useState(null);
+  const retryTimeoutRef = useRef(null);
+  const requestCountRef = useRef(0);
 
-  // Función para generar variación de precio aleatoria
+  // Función para generar variación de precio aleatoria con menos volatilidad
+  const generatePriceVariation = useCallback((basePrice) => {
+    const variation = (Math.random() - 0.5) * 0.0002;
+    return basePrice * (1 + variation);
+  }, []);
 
-  const generatePriceVariation = (basePrice) => {
-    const variation = (Math.random() - 0.5) * 0.0006;
-
-    return basePrice + variation;
-  };
+  // Configuración de axios con interceptor para el token
+  const axiosInstance = axios.create();
+  axiosInstance.interceptors.request.use((config) => {
+    const token = localStorage.getItem("token");
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
+    return config;
+  });
 
   // Efecto para la actualización del precio en tiempo real
-
   useEffect(() => {
     if (cryptoData) {
-      setCurrentPrice(cryptoData.current_price);
+      const basePrice = cryptoData.current_price || 35000;
+      setCurrentPrice(basePrice);
 
       const interval = setInterval(() => {
         setCurrentPrice((prevPrice) => {
           const newPrice = generatePriceVariation(prevPrice);
-
           setPriceDirection(newPrice > prevPrice ? "up" : "down");
-
           return newPrice;
         });
-      }, 100);
+      }, 1000);
 
       return () => clearInterval(interval);
     }
-  }, [cryptoData]);
+  }, [cryptoData, generatePriceVariation]);
 
+  // Función para manejar errores de la API
+  const handleApiError = useCallback(
+    (error) => {
+      console.warn("API Error:", error.message);
+      if (error.response?.status === 401) {
+        // Error de autenticación - redirigir al login
+        navigate("/login");
+      } else if (error.response?.status === 429) {
+        // Rate limit - usar datos de respaldo y reintentar después
+        requestCountRef.current++;
+        const retryAfter = Math.min(requestCountRef.current * 5000, 30000);
+        if (retryTimeoutRef.current) {
+          clearTimeout(retryTimeoutRef.current);
+        }
+        retryTimeoutRef.current = setTimeout(() => {
+          requestCountRef.current = 0;
+        }, retryAfter);
+      }
+    },
+    [navigate]
+  );
+
+  // Efecto para cargar datos de la criptomoneda
   useEffect(() => {
     const fetchCryptoData = async () => {
       try {
-        setLoading(true);
-
-        setError(null);
+        if (requestCountRef.current > 5) {
+          return; // Evitar demasiados reintentos
+        }
 
         const [detailResponse, historyResponse] = await Promise.all([
-          axios.get(`http://localhost:5000/api/crypto/${id}`),
-
-          axios.get(
+          axiosInstance.get(`http://localhost:5000/api/crypto/${id}`),
+          axiosInstance.get(
             `http://localhost:5000/api/crypto/${id}/history?days=${selectedTimeRange.days}`
           ),
         ]);
 
         setCryptoData(detailResponse.data);
-
         setChartData(historyResponse.data);
+        requestCountRef.current = 0;
       } catch (error) {
-        console.error("Error fetching crypto data:", error);
-
-        setError(
-          "No se pudo cargar la información de la criptomoneda. Por favor, intente más tarde."
-        );
+        handleApiError(error);
       } finally {
         setLoading(false);
       }
     };
 
     fetchCryptoData();
-  }, [id, selectedTimeRange]);
 
-  useEffect(() => {
-    if (!cryptoData) return;
-
-    const generateSimulatedOrder = () => {
-      const direction = Math.random() > 0.5 ? "Compra" : "Venta";
-
-      const price = currentPrice || cryptoData.current_price;
-
-      const amount = (Math.random() * 0.5 + 0.1).toFixed(4);
-
-      return {
-        time: new Date().toLocaleTimeString([], {
-          hour: "2-digit",
-
-          minute: "2-digit",
-
-          second: "2-digit",
-        }),
-
-        direction,
-
-        price: price.toFixed(4),
-
-        amount,
-      };
+    return () => {
+      if (retryTimeoutRef.current) {
+        clearTimeout(retryTimeoutRef.current);
+      }
     };
+  }, [id, selectedTimeRange, handleApiError]);
+
+  // Efecto para simular órdenes
+  useEffect(() => {
+    const generateSimulatedOrder = () => ({
+      time: new Date().toLocaleTimeString([], {
+        hour: "2-digit",
+        minute: "2-digit",
+        second: "2-digit",
+      }),
+      direction: Math.random() > 0.5 ? "Compra" : "Venta",
+      price: (currentPrice || 35000).toFixed(2),
+      amount: (Math.random() * 0.5 + 0.1).toFixed(4),
+    });
 
     setSimulatedOrders([
       generateSimulatedOrder(),
-
       generateSimulatedOrder(),
-
       generateSimulatedOrder(),
-
       generateSimulatedOrder(),
-
       generateSimulatedOrder(),
     ]);
 
     const interval = setInterval(() => {
       setSimulatedOrders((prev) => [
         generateSimulatedOrder(),
-
         ...prev.slice(0, 4),
       ]);
     }, 3000);
 
     return () => clearInterval(interval);
-  }, [cryptoData, currentPrice]);
+  }, [currentPrice]);
 
   const handleTrade = (type) => {
     setTradeType(type);
-
     setShowTradeModal(true);
   };
 
   const formatXAxis = (timestamp) => {
     const date = new Date(timestamp);
-
-    if (selectedTimeRange.days <= 1) {
-      return date.toLocaleTimeString([], {
-        hour: "2-digit",
-
-        minute: "2-digit",
-      });
-    }
-
-    return date.toLocaleDateString();
+    return selectedTimeRange.days <= 1
+      ? date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })
+      : date.toLocaleDateString();
   };
 
   const CustomTooltip = ({ active, payload, label }) => {
     if (active && payload && payload.length) {
       const data = payload[0].payload;
-
       return (
         <div className="custom-tooltip">
           <p>{`Tiempo: ${new Date(label).toLocaleString()}`}</p>
-
-          <p>{`Apertura: $${data.open.toFixed(2)}`}</p>
-
-          <p>{`Máximo: $${data.high.toFixed(2)}`}</p>
-
-          <p>{`Mínimo: $${data.low.toFixed(2)}`}</p>
-
-          <p>{`Cierre: $${data.close.toFixed(2)}`}</p>
+          <p>{`Apertura: $${Number(data.open).toFixed(2)}`}</p>
+          <p>{`Máximo: $${Number(data.high).toFixed(2)}`}</p>
+          <p>{`Mínimo: $${Number(data.low).toFixed(2)}`}</p>
+          <p>{`Cierre: $${Number(data.close).toFixed(2)}`}</p>
         </div>
       );
     }
-
     return null;
   };
 
   const formatPrice = (price) => {
-    if (typeof price !== "number") return "0.0000";
-
-    return price.toFixed(4);
+    if (typeof price !== "number") return "0.00";
+    return price.toFixed(2);
   };
 
   const getPriceClassName = () => {
@@ -229,43 +214,40 @@ const CryptoDetail = () => {
     }`;
   };
 
-  if (loading)
+  if (loading) {
     return (
-      <div className="loading">
-        <FaChartLine size={24} />
+      <div className="crypto-detail">
+        <div className="loading">
+          <FaChartLine className="loading-icon" />
+        </div>
       </div>
     );
-
-  if (error) return <div className="error-message">{error}</div>;
-
-  if (!cryptoData || chartData.length === 0)
-    return (
-      <div className="error-message">
-        No se pudo cargar la información. Por favor, intente más tarde.
-      </div>
-    );
+  }
 
   return (
     <div className="crypto-detail">
-      <div className="back-arrow" onClick={() => navigate(-1)}>
+      <motion.div
+        className="back-arrow"
+        onClick={() => navigate(-1)}
+        whileHover={{ scale: 1.1 }}
+        whileTap={{ scale: 0.9 }}
+      >
         <FaArrowLeft />
-      </div>
+      </motion.div>
 
       <div className="header">
-        <h1>{cryptoData.symbol.toUpperCase()}/USDT</h1>
-
+        <h1>{(cryptoData?.symbol || id).toUpperCase()}/USDT</h1>
         <div className="crypto-info">
           <p className={getPriceClassName()}>${formatPrice(currentPrice)}</p>
-
           <p
             className={
-              cryptoData.price_change_percentage_24h > 0
+              (cryptoData?.price_change_percentage_24h || 0) > 0
                 ? "positive"
                 : "negative"
             }
           >
-            {cryptoData.price_change_percentage_24h > 0 ? "+" : ""}
-            {cryptoData.price_change_percentage_24h.toFixed(2)}%
+            {(cryptoData?.price_change_percentage_24h || 0) > 0 ? "+" : ""}
+            {(cryptoData?.price_change_percentage_24h || 0).toFixed(2)}%
           </p>
         </div>
       </div>
@@ -274,15 +256,17 @@ const CryptoDetail = () => {
         <div className="chart-container">
           <div className="time-range-buttons">
             {timeRanges.map((range) => (
-              <button
+              <motion.button
                 key={range.label}
                 onClick={() => setSelectedTimeRange(range)}
                 className={
                   selectedTimeRange.label === range.label ? "active" : ""
                 }
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
               >
                 {range.label}
-              </button>
+              </motion.button>
             ))}
           </div>
 
@@ -294,38 +278,30 @@ const CryptoDetail = () => {
                 minTickGap={30}
                 tick={{ fontSize: 10 }}
               />
-
               <YAxis
                 domain={["auto", "auto"]}
                 orientation="right"
                 tick={{ fontSize: 10 }}
               />
-
               <Tooltip content={<CustomTooltip />} />
-
               <Bar dataKey="low" fill="transparent" />
-
               <Bar dataKey="high" fill="transparent" />
-
               {chartData.map((entry, index) => (
                 <ReferenceLine
                   key={`candle-${index}`}
                   segment={[
                     { x: entry.timestamp, y: entry.low },
-
                     { x: entry.timestamp, y: entry.high },
                   ]}
                   stroke={entry.open > entry.close ? "#e74c3c" : "#2ecc71"}
                   strokeWidth={2}
                 />
               ))}
-
               {chartData.map((entry, index) => (
                 <ReferenceLine
                   key={`body-${index}`}
                   segment={[
                     { x: entry.timestamp, y: entry.open },
-
                     { x: entry.timestamp, y: entry.close },
                   ]}
                   stroke={entry.open > entry.close ? "#e74c3c" : "#2ecc71"}
@@ -335,51 +311,57 @@ const CryptoDetail = () => {
             </ComposedChart>
           </ResponsiveContainer>
         </div>
-      </div>
 
-      <div className="trade-section">
-        <div className="simulated-orders">
-          <div className="title-orders">
-            <p>Tiempo</p>
-
-            <p>Dirección</p>
-
-            <p>Precio</p>
-
-            <p>Cantidad</p>
-          </div>
-
-          <table>
-            <tbody className="orders-position">
+        <div className="trade-section">
+          <div className="simulated-orders">
+            <div className="title-orders">
+              <p>Tiempo</p>
+              <p>Dirección</p>
+              <p>Precio</p>
+              <p>Cantidad</p>
+            </div>
+            <div className="orders-container">
               {simulatedOrders.map((order, index) => (
-                <tr key={index}>
-                  <td>{order.time}</td>
-
-                  <td
+                <motion.div
+                  key={index}
+                  className="order-row"
+                  initial={{ opacity: 0, y: -20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.3 }}
+                >
+                  <span>{order.time}</span>
+                  <span
                     className={
                       order.direction === "Compra" ? "positive" : "negative"
                     }
                   >
                     {order.direction}
-                  </td>
-
-                  <td>${order.price}</td>
-
-                  <td>{order.amount}</td>
-                </tr>
+                  </span>
+                  <span>${order.price}</span>
+                  <span>{order.amount}</span>
+                </motion.div>
               ))}
-            </tbody>
-          </table>
-        </div>
+            </div>
+          </div>
 
-        <div className="trade-buttons">
-          <button className="buy-button" onClick={() => handleTrade("buy")}>
-            Comprar
-          </button>
-
-          <button className="sell-button" onClick={() => handleTrade("sell")}>
-            Vender
-          </button>
+          <div className="trade-buttons">
+            <motion.button
+              className="buy-button"
+              onClick={() => handleTrade("buy")}
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+            >
+              Comprar
+            </motion.button>
+            <motion.button
+              className="sell-button"
+              onClick={() => handleTrade("sell")}
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+            >
+              Vender
+            </motion.button>
+          </div>
         </div>
       </div>
 
@@ -388,6 +370,7 @@ const CryptoDetail = () => {
           cryptoData={cryptoData}
           tradeType={tradeType}
           onClose={() => setShowTradeModal(false)}
+          currentPrice={currentPrice}
         />
       )}
     </div>

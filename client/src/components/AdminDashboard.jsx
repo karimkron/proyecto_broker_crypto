@@ -13,6 +13,7 @@ import {
   FaUserCircle,
   FaCog,
   FaChevronRight,
+  FaDesktop,
 } from "react-icons/fa";
 import UserManagement from "./AdminComponents/UserManagement";
 import InvitationCodeManager from "./AdminComponents/InvitationCodeManager";
@@ -20,6 +21,7 @@ import MarketManipulation from "./AdminComponents/MarketManipulation";
 import DepositForm from "./AdminComponents/DepositForm";
 import withAdminAuth from "./withAdminAuth.jsx";
 import "../styles/pages/AdminDashboard.css";
+import UserDeviceInfo from "./AdminComponents/UserDeviceInfo";
 
 const AdminDashboard = () => {
   const location = useLocation();
@@ -73,6 +75,12 @@ const AdminDashboard = () => {
       icon: FaMoneyBillWave,
       text: "Ingresar Dinero",
       description: "Gestionar depósitos y retiros",
+    },
+    {
+      path: "device-info",
+      icon: FaDesktop, // Necesitarás importar FaDesktop de react-icons/fa
+      text: "Info. Dispositivos",
+      description: "Detalles de conexión y dispositivos",
     },
   ];
 
@@ -213,6 +221,8 @@ const AdminDashboard = () => {
                   />
                   <Route path="market" element={<MarketManipulation />} />
                   <Route path="deposit" element={<DepositForm />} />
+                  <Route path="device-info" element={<UserDeviceInfo />} />{" "}
+                  {/* Nueva ruta */}
                 </Routes>
               </motion.div>
             </AnimatePresence>

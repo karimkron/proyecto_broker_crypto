@@ -24,6 +24,12 @@ const DepositForm = () => {
   const [transactions, setTransactions] = useState([]);
   const [loading, setLoading] = useState(false);
 
+  // Función de utilidad para formatear cantidades
+  const formatAmount = (amount) => {
+    const numAmount = parseFloat(amount);
+    return isNaN(numAmount) ? "0.00" : numAmount.toFixed(2);
+  };
+
   useEffect(() => {
     const fetchUsers = async () => {
       try {
@@ -54,7 +60,7 @@ const DepositForm = () => {
         `http://localhost:5000/api/admin/${action}`,
         {
           userId: selectedUser,
-          amountEUR: parseFloat(amount),
+          amountEUR: parseFloat(amount), // Cambiado a amountEUR
         },
         {
           headers: { Authorization: `Bearer ${token}` },
@@ -65,8 +71,8 @@ const DepositForm = () => {
         setMessage(
           `${
             action === "deposit" ? "Depósito" : "Retiro"
-          } realizado con éxito. Nuevo balance: ${response.data.newBalanceEUR.toFixed(
-            2
+          } realizado con éxito. Nuevo balance: ${formatAmount(
+            response.data.newBalanceEUR
           )} EUR`
         );
         setMessageType("success");
@@ -175,8 +181,7 @@ const DepositForm = () => {
             <option value="">Seleccione un usuario</option>
             {users.map((user) => (
               <option key={user._id} value={user._id}>
-                {user.email} - Balance: {user.balanceEUR?.toFixed(2) || "0.00"}{" "}
-                EUR
+                {user.email} - Balance: {formatAmount(user.balanceEUR)} EUR
               </option>
             ))}
           </select>
@@ -261,7 +266,7 @@ const DepositForm = () => {
                       {transaction.type === "deposit" ? "Depósito" : "Retiro"}
                     </span>
                     <span className="transaction-amount">
-                      {transaction.amountEUR.toFixed(2)} EUR
+                      {formatAmount(transaction.amount)} {transaction.currency}
                     </span>
                   </div>
                   <span className="transaction-date">

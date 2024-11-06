@@ -413,3 +413,53 @@
   background: var(--accent-gradient);
   transition: width 0.3s ease;
 }
+
+.wallet-address-container {
+  background: rgba(30, 30, 30, 0.95);
+  border-radius: 12px;
+  padding: 1.5rem;
+  margin: 1rem 0;
+}
+
+.address-box {
+  display: flex;
+  align-items: center;
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 8px;
+  padding: 1rem;
+  margin: 0.5rem 0;
+  gap: 1rem;
+}
+
+.address {
+  font-family: monospace;
+  color: white;
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.copy-button {
+  background: none;
+  border: none;
+  color: rgba(255, 255, 255, 0.5);
+  cursor: pointer;
+  padding: 0.5rem;
+  border-radius: 4px;
+  transition: all 0.2s;
+}
+
+.copy-button:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: white;
+}
+
+.copy-button.copied {
+  color: #4caf50;
+}
+
+.address-note {
+  color: rgba(255, 255, 255, 0.5);
+  font-size: 0.8rem;
+  margin-top: 0.5rem;
+}

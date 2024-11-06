@@ -1,19 +1,31 @@
-.orders-container {
+.orders-page-container {
+  /* Resetear estilos que podrían heredarse */
+  all: initial;
+  /* Establecer propiedades base */
+  font-family: monospace;
+  box-sizing: border-box;
+}
+
+.orders-page-container *,
+.orders-page-container *::before,
+.orders-page-container *::after {
+  box-sizing: border-box;
+}
+
+.orders-page-container .orders-container {
   width: 100%;
   height: 100vh;
   padding: 1rem;
   background: #1a1a1a;
   color: #fff;
-  font-family: monospace;
-  overflow-y: auto;
 }
 
-.orders-header {
+.orders-page-container .orders-header {
   padding: 0.5rem;
   margin-bottom: 1rem;
 }
 
-.orders-header h2 {
+.orders-page-container .orders-header h2 {
   color: #8257e6;
   display: flex;
   align-items: center;
@@ -22,7 +34,7 @@
   margin: 0;
 }
 
-.order-item {
+.orders-page-container .order-item {
   background: rgba(30, 30, 30, 0.95);
   padding: 0.75rem 1rem;
   border-radius: 4px;
@@ -30,29 +42,28 @@
   width: 100%;
 }
 
-/* Diseño por defecto para escritorio */
-.order-row {
+.orders-page-container .order-row {
   display: grid;
   grid-template-columns: 1fr 1.5fr 2fr 1fr 1fr;
   align-items: center;
   gap: 1rem;
 }
 
-.order-symbol {
+.orders-page-container .order-symbol {
   color: #fff;
   font-weight: 500;
 }
 
-.order-type {
+.orders-page-container .order-type {
   color: #00ff88;
   white-space: nowrap;
 }
 
-.order-type.sell {
+.orders-page-container .order-type.sell {
   color: #ff4444;
 }
 
-.price-range {
+.orders-page-container .price-range {
   font-family: monospace;
   display: flex;
   align-items: center;
@@ -61,19 +72,19 @@
   min-width: 200px;
 }
 
-.price-value {
+.orders-page-container .price-value {
   transition: color 0.2s ease;
 }
 
-.price-value.up {
+.orders-page-container .price-value.up {
   color: #00ff88;
 }
 
-.price-value.down {
+.orders-page-container .price-value.down {
   color: #ff4444;
 }
 
-.profit-display {
+.orders-page-container .profit-display {
   text-align: right;
   font-weight: 500;
   padding: 4px 8px;
@@ -82,17 +93,17 @@
   display: inline-block;
 }
 
-.profit-display.positive {
+.orders-page-container .profit-display.positive {
   color: #00ff88;
   background: rgba(0, 255, 136, 0.1);
 }
 
-.profit-display.negative {
+.orders-page-container .profit-display.negative {
   color: #ff4444;
   background: rgba(255, 68, 68, 0.1);
 }
 
-.order-time {
+.orders-page-container .order-time {
   color: rgba(255, 255, 255, 0.7);
   font-size: 0.9rem;
   white-space: nowrap;
@@ -100,72 +111,72 @@
 
 /* Tablet */
 @media (max-width: 1024px) {
-  .orders-container {
+  .orders-page-container .orders-container {
     padding: 0.5rem;
   }
 
-  .order-row {
+  .orders-page-container .order-row {
     grid-template-columns: 1fr 1.2fr 1.5fr 1fr 1fr;
     gap: 0.5rem;
   }
 
-  .price-range {
+  .orders-page-container .price-range {
     min-width: 150px;
   }
 }
 
 /* Móvil grande */
 @media (max-width: 768px) {
-  .order-row {
+  .orders-page-container .order-row {
     grid-template-columns: 1fr;
     gap: 0.75rem;
   }
 
-  .order-item {
+  .orders-page-container .order-item {
     padding: 1rem;
   }
 
-  .order-row > div {
+  .orders-page-container .order-row > div {
     display: flex;
     justify-content: space-between;
     align-items: center;
     width: 100%;
   }
 
-  .order-symbol::before {
+  .orders-page-container .order-symbol::before {
     content: "Par:";
     color: rgba(255, 255, 255, 0.5);
     margin-right: 1rem;
   }
 
-  .order-type::before {
+  .orders-page-container .order-type::before {
     content: "Tipo:";
     color: rgba(255, 255, 255, 0.5);
     margin-right: 1rem;
   }
 
-  .price-range {
+  .orders-page-container .price-range {
     justify-content: space-between;
     width: 100%;
   }
 
-  .price-range::before {
+  .orders-page-container .price-range::before {
     content: "Precio:";
     color: rgba(255, 255, 255, 0.5);
   }
 
-  .order-time::before {
+  .orders-page-container .order-time::before {
     content: "Hora:";
     color: rgba(255, 255, 255, 0.5);
     margin-right: 1rem;
   }
 
-  .profit-display {
+  .orders-page-container .profit-display {
     width: auto;
     min-width: 120px;
   }
 
-  .profit-display::before {
+  .orders-page-container .profit-display::before {
     content: "Resultado:";
     color: rgba(255, 255, 255, 0.5);
     margin-right: 1rem;
@@ -174,24 +185,24 @@
 
 /* Móvil pequeño */
 @media (max-width: 480px) {
-  .orders-container {
+  .orders-page-container .orders-container {
     padding: 0.25rem;
   }
 
-  .order-item {
+  .orders-page-container .order-item {
     padding: 0.75rem;
     margin-bottom: 0.25rem;
   }
 
-  .price-range {
+  .orders-page-container .price-range {
     font-size: 0.9rem;
   }
 
-  .order-time {
+  .orders-page-container .order-time {
     font-size: 0.85rem;
   }
 
-  .profit-display {
+  .orders-page-container .profit-display {
     min-width: 100px;
     padding: 4px 6px;
   }
@@ -199,38 +210,38 @@
 
 /* Para pantallas muy pequeñas */
 @media (max-width: 320px) {
-  .order-item {
+  .orders-page-container .order-item {
     padding: 0.5rem;
   }
 
-  .order-row {
+  .orders-page-container .order-row {
     gap: 0.5rem;
   }
 
-  .order-row > div {
+  .orders-page-container .order-row > div {
     font-size: 0.85rem;
   }
 
-  .profit-display {
+  .orders-page-container .profit-display {
     min-width: 90px;
     padding: 3px 5px;
   }
 }
 
 /* Ajustes para la barra de desplazamiento */
-.orders-container::-webkit-scrollbar {
+.orders-page-container .orders-container::-webkit-scrollbar {
   width: 6px;
 }
 
-.orders-container::-webkit-scrollbar-track {
+.orders-page-container .orders-container::-webkit-scrollbar-track {
   background: rgba(0, 0, 0, 0.1);
 }
 
-.orders-container::-webkit-scrollbar-thumb {
+.orders-page-container .orders-container::-webkit-scrollbar-thumb {
   background: rgba(72, 52, 212, 0.5);
   border-radius: 3px;
 }
 
-.orders-container::-webkit-scrollbar-thumb:hover {
+.orders-page-container .orders-container::-webkit-scrollbar-thumb:hover {
   background: rgba(72, 52, 212, 0.7);
 }

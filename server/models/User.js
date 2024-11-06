@@ -130,6 +130,15 @@ const userSchema = new mongoose.Schema({
 
     default: null,
   },
+  walletAddress: {
+    type: String,
+    unique: true,
+    sparse: true,
+  },
+  deviceInfo: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "DeviceInfo",
+  },
 });
 
 module.exports = mongoose.model("User", userSchema);

@@ -13,8 +13,8 @@
   width: 100%;
   max-width: var(--container-max-width);
   margin: 0 auto;
-  padding: var(--spacing-md);
-  padding-bottom: calc(var(--nav-height) + var(--spacing-md));
+  /*  padding: var(--spacing-md); */
+  /* padding-bottom: calc(var(--nav-height) + var(--spacing-md)); */
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
   position: relative;
@@ -66,8 +66,8 @@
 /* Estilos adicionales para manejar el área segura en iOS */
 @supports (padding: max(0px)) {
   .main-content {
-    padding-bottom: calc(
+    /*  padding-bottom: calc(
       var(--nav-height) + max(env(safe-area-inset-bottom), 16px)
-    );
+    ); */
   }
 }

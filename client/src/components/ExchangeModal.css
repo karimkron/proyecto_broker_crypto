@@ -91,6 +91,7 @@
 .currency-input select:focus {
   outline: none;
   border-color: #4834d4;
+  background-color: #686de0;
   box-shadow: 0 0 0 2px rgba(72, 52, 212, 0.2);
 }
 

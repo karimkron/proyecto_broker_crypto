@@ -13,11 +13,13 @@ const Orders = () => {
   const getMaxPriceVariation = (symbol, initialPrice) => {
     const symbolLower = symbol.toLowerCase();
     if (symbolLower === "btc") {
-      return Math.random() * 900 + 300; // Entre 300 y 1200 USDT para BTC
+      return Math.random() * 900 + 300;
+    } else if (symbolLower === "eth") {
+      return Math.random() * 80 + 20;
     } else if (initialPrice < 1) {
-      return Math.random() * 0.02 + 0.01; // Entre 0.01 y 0.03 para criptos de bajo valor
+      return Math.random() * 0.02 + 0.01;
     } else {
-      return initialPrice * (Math.random() * 0.004 + 0.001); // 0.1% - 0.5% para otras
+      return initialPrice * (Math.random() * 0.004 + 0.001);
     }
   };
 
@@ -35,15 +37,6 @@ const Orders = () => {
             headers: { Authorization: `Bearer ${token}` },
           }
         );
-        console.log(
-          "Orders fetched:",
-          response.data.map((order) => ({
-            orderId: order._id,
-            willProfit: order.willProfit,
-            symbol: order.cryptoSymbol,
-            amount: order.amount,
-          }))
-        );
         setOrders(response.data);
         setLoading(false);
       } catch (err) {
@@ -56,18 +49,12 @@ const Orders = () => {
     fetchOrders();
 
     socket.on("orderUpdate", (data) => {
-      console.log("Order update received:", {
-        orderId: data.orderId,
-        willProfit: data.willProfit,
-        currentPrice: data.currentPrice,
-        progress: data.progress,
-      });
-
       setOrders((prevOrders) =>
         prevOrders.map((order) =>
           order._id === data.orderId
             ? {
                 ...order,
+                displaySymbol: data.displaySymbol || order.displaySymbol,
                 currentPrice: data.currentPrice,
                 progress: data.progress,
               }
@@ -77,19 +64,14 @@ const Orders = () => {
     });
 
     socket.on("orderComplete", (data) => {
-      console.log("Order completed:", {
-        orderId: data.orderId,
-        willProfit: data.willProfit,
-        finalPrice: data.finalPrice,
-        result: data.result,
-      });
-
       setOrders((prevOrders) =>
         prevOrders.map((order) =>
           order._id === data.orderId
             ? {
                 ...order,
                 status: "completada",
+                displaySymbol: data.displaySymbol || order.displaySymbol,
+                displayFinalPrice: data.finalPrice,
                 finalPrice: data.finalPrice,
                 result: data.result,
               }
@@ -107,26 +89,20 @@ const Orders = () => {
   }, []);
 
   const LiveOrder = ({ order }) => {
-    const [displayPrice, setDisplayPrice] = useState(order.initialPrice);
+    const [displayPrice, setDisplayPrice] = useState(
+      order.displayInitialPrice || order.initialPrice
+    );
     const [currentProfit, setCurrentProfit] = useState(0);
     const [priceDirection, setPriceDirection] = useState(null);
 
     useEffect(() => {
       if (order.status === "en progreso") {
-        console.log("Live order status:", {
-          orderId: order._id,
-          willProfit: order.willProfit,
-          symbol: order.cryptoSymbol,
-          initialPrice: order.initialPrice,
-          status: order.status,
-        });
-
         const startTime = new Date(order.createdAt).getTime();
         const duration = getDurationInMs(order.duration);
         const targetProfit = (order.amount * order.profitPercentage) / 100;
         const maxPriceChange = getMaxPriceVariation(
-          order.cryptoSymbol,
-          order.initialPrice
+          order.displaySymbol || order.cryptoSymbol,
+          order.displayInitialPrice || order.initialPrice
         );
 
         const interval = setInterval(() => {
@@ -138,13 +114,17 @@ const Orders = () => {
             clearInterval(interval);
             if (order.willProfit) {
               setCurrentProfit(targetProfit);
-              setDisplayPrice(order.initialPrice + maxPriceChange);
+              setDisplayPrice(
+                (order.displayInitialPrice || order.initialPrice) +
+                  maxPriceChange
+              );
             } else {
               setCurrentProfit(-order.amount);
               setDisplayPrice(
                 Math.max(
-                  order.initialPrice - maxPriceChange,
-                  order.initialPrice * 0.7
+                  (order.displayInitialPrice || order.initialPrice) -
+                    maxPriceChange,
+                  (order.displayInitialPrice || order.initialPrice) * 0.7
                 )
               );
             }
@@ -160,7 +140,10 @@ const Orders = () => {
 
               const priceChange = maxPriceChange * smoothProgress;
               const noise = maxPriceChange * 0.01 * (Math.random() - 0.5);
-              const newPrice = order.initialPrice + priceChange + noise;
+              const newPrice =
+                (order.displayInitialPrice || order.initialPrice) +
+                priceChange +
+                noise;
               setDisplayPrice(newPrice);
               setPriceDirection("up");
             } else {
@@ -170,8 +153,10 @@ const Orders = () => {
               const priceChange = maxPriceChange * lossProgress;
               const noise = maxPriceChange * 0.01 * (Math.random() - 0.5);
               const newPrice = Math.max(
-                order.initialPrice - priceChange + noise,
-                order.initialPrice * 0.7
+                (order.displayInitialPrice || order.initialPrice) -
+                  priceChange +
+                  noise,
+                (order.displayInitialPrice || order.initialPrice) * 0.7
               );
               setDisplayPrice(newPrice);
               setPriceDirection("down");
@@ -185,16 +170,22 @@ const Orders = () => {
 
     return (
       <>
-        <div className="order-symbol">{order.cryptoSymbol}/usdt</div>
+        <div className="order-symbol">
+          {(order.displaySymbol || order.cryptoSymbol).toUpperCase()}/USDT
+        </div>
         <div className={`order-type ${order.orderType}`}>
           {order.orderType} {formatAmount(order.amount)}
         </div>
         <div className="price-range">
-          <span>{formatPrice(order.initialPrice)}</span>
+          <span>
+            {formatPrice(order.displayInitialPrice || order.initialPrice)}
+          </span>
           <span className="price-arrow">→</span>
           <span className={`price-value ${priceDirection}`}>
             {formatPrice(
-              order.status === "completada" ? order.finalPrice : displayPrice
+              order.status === "completada"
+                ? order.displayFinalPrice || order.finalPrice
+                : displayPrice
             )}
           </span>
         </div>

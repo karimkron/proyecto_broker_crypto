@@ -1,264 +1,333 @@
-import React from "react";
+import React, { useState, useEffect, useCallback } from "react";
+import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import {
-  FaNewspaper,
   FaChartLine,
   FaBitcoin,
   FaEthereum,
   FaDollarSign,
-  FaArrowRight,
   FaArrowUp,
   FaArrowDown,
-  FaFire,
+  FaExchangeAlt,
+  FaWallet,
+  FaUserShield,
+  FaChevronRight,
   FaGlobe,
-  FaChartBar,
-  FaLightbulb,
-  FaBookmark,
+  FaSpinner,
+  FaNewspaper,
 } from "react-icons/fa";
+import io from "socket.io-client";
+import axiosInstance from "../utils/axiosConfig";
 import "../styles/pages/home.css";
 
-const fallbackImageUrl =
-  "https://via.placeholder.com/300x200?text=Imagen+No+Disponible";
+// Datos de respaldo optimizados
+const fallbackData = [
+  {
+    id: "bitcoin",
+    symbol: "btc",
+    name: "Bitcoin",
+    current_price: 35000,
+    price_change_percentage_24h: 2.5,
+  },
+  {
+    id: "ethereum",
+    symbol: "eth",
+    name: "Ethereum",
+    current_price: 2000,
+    price_change_percentage_24h: 1.8,
+  },
+  {
+    id: "tether",
+    symbol: "usdt",
+    name: "Tether",
+    current_price: 1,
+    price_change_percentage_24h: 0.1,
+  },
+];
 
-const ImageWithFallback = ({ src, alt, className }) => {
-  const handleError = (e) => {
-    e.target.src = fallbackImageUrl;
-  };
+const newsData = [
+  {
+    id: 1,
+    title: "Bitcoin alcanza nuevo máximo histórico",
+    category: "Mercado",
+    summary:
+      "El precio de Bitcoin supera todas las expectativas mientras el mercado muestra señales alcistas.",
+    date: new Date(),
+  },
+  {
+    id: 2,
+    title: "Ethereum 2.0 revoluciona el mercado",
+    category: "Tecnología",
+    summary:
+      "La actualización más esperada de Ethereum promete mejorar la escalabilidad y eficiencia.",
+    date: new Date(),
+  },
+  {
+    id: 3,
+    title: "Regulación cripto en Europa",
+    category: "Regulación",
+    summary:
+      "Nuevas normativas europeas buscan establecer un marco regulatorio claro para las criptomonedas.",
+    date: new Date(),
+  },
+];
 
-  return (
-    <img src={src} alt={alt} onError={handleError} className={className} />
-  );
+const CryptoIcon = ({ symbol }) => {
+  switch (symbol) {
+    case "btc":
+      return <FaBitcoin className="home-crypto-icon home-bitcoin" />;
+    case "eth":
+      return <FaEthereum className="home-crypto-icon home-ethereum" />;
+    default:
+      return <FaDollarSign className="home-crypto-icon home-tether" />;
+  }
 };
 
 const Home = () => {
-  const articles = [
-    {
-      id: 1,
-      title: "El futuro de las criptomonedas",
-      description:
-        "Explorando las tendencias y predicciones para el mercado de criptomonedas en los próximos años.",
-      imageUrl: "https://images.unsplash.com/photo-1621761191319-c6fb62004040",
-      category: "Análisis",
-    },
-    {
-      id: 2,
-      title: "Ethereum 2.0: Una nueva era",
-      description:
-        "Una guía completa sobre las actualizaciones de Ethereum y cómo afectarán al ecosistema.",
-      imageUrl: "https://images.unsplash.com/photo-1621504450181-5d356f61d307",
-      category: "Tecnología",
-    },
-    {
-      id: 3,
-      title: "NFTs: Más allá del arte digital",
-      description:
-        "Descubre cómo los NFTs están revolucionando diversos sectores, desde el entretenimiento hasta los bienes raíces.",
-      imageUrl: "https://images.unsplash.com/photo-1621761191319-c6fb62004040",
-      category: "Innovación",
-    },
-    {
-      id: 4,
-      title: "Regulación Global de Criptomonedas",
-      description:
-        "Analizamos cómo diferentes países están abordando la regulación de las criptomonedas.",
-      imageUrl: "https://images.unsplash.com/photo-1621504450181-5d356f61d307",
-      category: "Regulación",
-    },
-  ];
+  const navigate = useNavigate();
+  const [loading, setLoading] = useState(true);
+  const [cryptoData, setCryptoData] = useState(fallbackData);
+  const [priceVariations, setPriceVariations] = useState({});
 
-  const marketData = [
-    {
-      id: 1,
-      name: "Bitcoin",
-      symbol: "BTC",
-      price: 68789.0,
-      change: 2.5,
-      icon: <FaBitcoin />,
-    },
-    {
-      id: 2,
-      name: "Ethereum",
-      symbol: "ETH",
-      price: 4356.78,
-      change: 1.8,
-      icon: <FaEthereum />,
-    },
-    {
-      id: 3,
-      name: "Tether",
-      symbol: "USDT",
-      price: 1.0,
-      change: 0.1,
-      icon: <FaDollarSign />,
-    },
-  ];
+  const generatePriceVariation = useCallback((basePrice) => {
+    const variation = (Math.random() - 0.5) * 0.00001;
+    return Number((basePrice * (1 + variation)).toFixed(4));
+  }, []);
 
-  const trendingTopics = [
-    { id: 1, title: "Bitcoin alcanza nuevo ATH", views: "50K" },
-    { id: 2, title: "Ethereum 2.0 se acerca", views: "35K" },
-    { id: 3, title: "Nuevas regulaciones en EU", views: "28K" },
-    { id: 4, title: "DeFi alcanza $100B TVL", views: "22K" },
-    { id: 5, title: "Layer 2s en crecimiento", views: "18K" },
-  ];
+  useEffect(() => {
+    const token = localStorage.getItem("token");
+    if (!token) {
+      navigate("/login");
+      return;
+    }
 
-  return (
+    const socket = io("http://localhost:5000", { auth: { token } });
+    let priceInterval;
+    let dataInterval;
+
+    const fetchInitialData = async () => {
+      try {
+        const response = await axiosInstance.get("/crypto-data");
+        if (response.data?.length > 0) {
+          setCryptoData(response.data);
+          const initialVariations = Object.fromEntries(
+            response.data.map((crypto) => [crypto.id, crypto.current_price])
+          );
+          setPriceVariations(initialVariations);
+        }
+      } catch (err) {
+        console.warn("Using fallback data:", err);
+        setCryptoData(fallbackData);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    const setupIntervals = () => {
+      priceInterval = setInterval(() => {
+        setPriceVariations((prev) => {
+          const newVariations = { ...prev };
+          Object.keys(newVariations).forEach((cryptoId) => {
+            newVariations[cryptoId] = generatePriceVariation(
+              newVariations[cryptoId]
+            );
+          });
+          return newVariations;
+        });
+      }, 2000);
+
+      dataInterval = setInterval(fetchInitialData, 60000);
+    };
+
+    fetchInitialData();
+    setupIntervals();
+
+    socket.on("priceUpdate", ({ cryptoId, price }) => {
+      setPriceVariations((prev) => ({ ...prev, [cryptoId]: price }));
+    });
+
+    return () => {
+      clearInterval(priceInterval);
+      clearInterval(dataInterval);
+      socket.disconnect();
+    };
+  }, [navigate, generatePriceVariation]);
+
+  if (loading) {
+    return (
+      <div className="home-loading">
+        <FaSpinner className="home-spinning" />
+        <p>Cargando...</p>
+      </div>
+    );
+  }
+
+  const renderMarketCard = (crypto) => (
     <motion.div
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      className="home-container"
+      key={crypto.id}
+      className="home-market-card"
+      whileHover={{ y: -5 }}
+      onClick={() => navigate("/market")}
     >
-      <motion.header
-        initial={{ y: -20 }}
-        animate={{ y: 0 }}
-        className="home-header"
-      >
-        <h1>
-          <FaNewspaper /> Noticias y Análisis de Mercado
-        </h1>
-      </motion.header>
-
-      <div className="home-main">
-        <motion.section
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="featured-news"
+      <div className="home-market-card-header">
+        <CryptoIcon symbol={crypto.symbol} />
+        <span className="home-crypto-name">{crypto.name}</span>
+      </div>
+      <div className="home-market-card-body">
+        <div className="home-crypto-price">
+          $
+          {(
+            priceVariations[crypto.id] || crypto.current_price
+          ).toLocaleString()}
+        </div>
+        <div
+          className={`home-crypto-change ${
+            crypto.price_change_percentage_24h >= 0 ? "positive" : "negative"
+          }`}
         >
-          <h2>
-            <FaFire /> Noticia Destacada
-          </h2>
-          <div className="featured-article">
-            <ImageWithFallback
-              src="https://images.unsplash.com/photo-1518546305927-5a555bb7020d"
-              alt="Bitcoin ATH"
-              className="featured-image"
-            />
-            <motion.h3
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ delay: 0.2 }}
-            >
-              Bitcoin alcanza nuevo máximo histórico
-            </motion.h3>
-            <motion.p
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ delay: 0.3 }}
-            >
-              El precio de Bitcoin ha superado los $70,000 por primera vez en su
-              historia, marcando un hito importante para la criptomoneda líder.
-              Los expertos señalan que esta subida se debe a...
-            </motion.p>
-            <motion.a href="#" className="read-more" whileHover={{ x: 5 }}>
-              Leer más <FaArrowRight />
-            </motion.a>
-          </div>
-        </motion.section>
-
-        <motion.section
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.2 }}
-          className="market-overview-section"
-        >
-          <h2>
-            <FaChartBar /> Resumen del Mercado
-          </h2>
-          <div className="market-overview">
-            {marketData.map((coin, index) => (
-              <motion.div
-                key={coin.id}
-                className="market-item"
-                initial={{ opacity: 0, x: -20 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: index * 0.1 }}
-              >
-                <div className="coin-info">
-                  {coin.icon}
-                  <span>{coin.name}</span>
-                </div>
-                <div className="price-info">
-                  <div className="coin-price">
-                    ${coin.price.toLocaleString()}
-                  </div>
-                  <div
-                    className={`price-change ${
-                      coin.change > 0 ? "positive" : "negative"
-                    }`}
-                  >
-                    {coin.change > 0 ? <FaArrowUp /> : <FaArrowDown />}
-                    {Math.abs(coin.change)}%
-                  </div>
-                </div>
-              </motion.div>
-            ))}
-          </div>
-        </motion.section>
-
-        <section className="recent-articles">
-          <h2>
-            <FaGlobe /> Últimas Noticias
-          </h2>
-          <motion.div className="articles-grid">
-            <AnimatePresence>
-              {articles.map((article, index) => (
-                <motion.article
-                  key={article.id}
-                  className="article-card"
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, scale: 0.95 }}
-                  transition={{ delay: index * 0.1 }}
-                  whileHover={{ y: -5 }}
-                >
-                  <ImageWithFallback
-                    src={article.imageUrl}
-                    alt={article.title}
-                  />
-                  <div className="article-content">
-                    <h3>{article.title}</h3>
-                    <p>{article.description}</p>
-                    <div className="article-footer">
-                      <span className="article-category">
-                        {article.category}
-                      </span>
-                      <a href="#" className="read-more">
-                        Leer más <FaArrowRight />
-                      </a>
-                    </div>
-                  </div>
-                </motion.article>
-              ))}
-            </AnimatePresence>
-          </motion.div>
-        </section>
-
-        <motion.section
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="trending-news"
-        >
-          <h2>
-            <FaLightbulb /> Tendencias
-          </h2>
-          {trendingTopics.map((topic, index) => (
-            <motion.div
-              key={topic.id}
-              className="trending-item"
-              initial={{ opacity: 0, x: -20 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: index * 0.1 }}
-              whileHover={{ x: 5 }}
-            >
-              <span className="trending-number">{index + 1}</span>
-              <div className="trending-content">
-                <h3>{topic.title}</h3>
-                <span>{topic.views} lecturas</span>
-              </div>
-            </motion.div>
-          ))}
-        </motion.section>
+          {crypto.price_change_percentage_24h >= 0 ? (
+            <FaArrowUp />
+          ) : (
+            <FaArrowDown />
+          )}
+          {Math.abs(crypto.price_change_percentage_24h).toFixed(2)}%
+        </div>
       </div>
     </motion.div>
+  );
+
+  return (
+    <div className="home-container">
+      <motion.div
+        initial={{ opacity: 0, y: -20 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="home-hero"
+      >
+        <div className="home-hero-content">
+          <h1>Trading simplificado para todos</h1>
+          <p>
+            Opera con las principales criptomonedas de forma segura y sencilla
+          </p>
+          <div className="home-hero-buttons">
+            <button
+              onClick={() => navigate("/market")}
+              className="home-button-primary"
+            >
+              <FaChartLine /> Comenzar a Operar
+            </button>
+            <button
+              onClick={() => navigate("/wallet")}
+              className="home-button-secondary"
+            >
+              <FaWallet /> Depositar Fondos
+            </button>
+          </div>
+        </div>
+      </motion.div>
+
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        className="home-market-section"
+      >
+        <div className="home-section-header">
+          <h2>Mercados Principales</h2>
+          <button onClick={() => navigate("/market")} className="home-view-all">
+            Ver Todos <FaChevronRight />
+          </button>
+        </div>
+        <div className="home-market-grid">
+          {cryptoData.map(renderMarketCard)}
+        </div>
+      </motion.div>
+
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="home-features"
+      >
+        <div className="home-section-header">
+          <h2>Características Principales</h2>
+        </div>
+        <div className="home-features-grid">
+          {[
+            {
+              icon: <FaChartLine />,
+              title: "Trading Avanzado",
+              description:
+                "Accede a herramientas profesionales y análisis en tiempo real",
+            },
+            {
+              icon: <FaWallet />,
+              title: "Wallet Segura",
+              description:
+                "Almacena tus criptomonedas de forma segura con nuestra wallet multicrypto",
+            },
+            {
+              icon: <FaUserShield />,
+              title: "KYC Verificado",
+              description:
+                "Opera con la tranquilidad de una plataforma regulada y verificada",
+            },
+          ].map((feature, index) => (
+            <motion.div key={index} className="home-feature-card">
+              <div className="home-feature-icon">{feature.icon}</div>
+              <h3>{feature.title}</h3>
+              <p>{feature.description}</p>
+            </motion.div>
+          ))}
+        </div>
+      </motion.div>
+
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        className="home-news-section"
+      >
+        <div className="home-section-header">
+          <h2>
+            <FaNewspaper /> Últimas Noticias
+          </h2>
+        </div>
+        <div className="home-news-grid">
+          {newsData.map((news) => (
+            <motion.div
+              key={news.id}
+              className="home-news-card"
+              whileHover={{ y: -5 }}
+            >
+              <div className="home-news-header">
+                <span className="home-news-category">{news.category}</span>
+                <time className="home-news-date">
+                  {news.date.toLocaleDateString()}
+                </time>
+              </div>
+              <h3 className="home-news-title">{news.title}</h3>
+              <p className="home-news-summary">{news.summary}</p>
+            </motion.div>
+          ))}
+        </div>
+      </motion.div>
+
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        className="home-cta"
+      >
+        <div className="home-cta-content">
+          <h2>¿Listo para empezar?</h2>
+          <p>Únete a miles de traders que ya confían en nuestra plataforma</p>
+          <div className="home-cta-buttons">
+            <button
+              onClick={() => navigate("/market")}
+              className="home-button-primary"
+            >
+              <FaChartLine /> Comenzar Ahora
+            </button>
+          </div>
+        </div>
+      </motion.div>
+    </div>
   );
 };
 

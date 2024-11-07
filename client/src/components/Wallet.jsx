@@ -1,5 +1,5 @@
 // ====== IMPORTACIONES ======
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useRef } from "react";
 import axiosInstance from "../utils/axiosConfig.js";
 import { motion, AnimatePresence } from "framer-motion";
 
@@ -22,6 +22,7 @@ import {
   FaMinus,
   FaExclamationTriangle,
   FaHistory,
+  FaEllipsisH,
 } from "react-icons/fa";
 
 // Componentes
@@ -60,6 +61,8 @@ const Wallet = () => {
     useState(false);
   const [showExchangeModal, setShowExchangeModal] = useState(false);
   const [showTransferModal, setShowTransferModal] = useState(false);
+  const [activeDotIndex, setActiveDotIndex] = useState(0);
+  const quickActionsRef = useRef(null);
 
   // ====== FUNCIONES AUXILIARES ======
   const formatCurrency = useCallback((value, currency) => {
@@ -207,6 +210,23 @@ const Wallet = () => {
     };
   }, [fetchWalletData, fetchCryptoData]);
 
+  useEffect(() => {
+    const handleScroll = () => {
+      if (quickActionsRef.current) {
+        const scrollPosition = quickActionsRef.current.scrollLeft;
+        const width = quickActionsRef.current.offsetWidth;
+        const index = Math.round(scrollPosition / width);
+        setActiveDotIndex(index);
+      }
+    };
+
+    const quickActions = quickActionsRef.current;
+    if (quickActions) {
+      quickActions.addEventListener("scroll", handleScroll);
+      return () => quickActions.removeEventListener("scroll", handleScroll);
+    }
+  }, []);
+
   // ====== RENDERIZADO CONDICIONAL DE ERROR ======
   if (error) {
     return (
@@ -288,38 +308,49 @@ const Wallet = () => {
         </motion.div>
 
         {/* Quick Actions */}
-        <div className="quick-actions">
-          <QuickActionButton
-            icon={<FaArrowDown />}
-            text="Depositar"
-            onClick={() => {
-              /* Implementar lógica de depósito */
-            }}
-          />
-          <QuickActionButton
-            icon={<FaArrowRight />}
-            text="Transferir"
-            onClick={() => setShowTransferModal(true)}
-          />
-          <QuickActionButton
-            icon={<FaHistory />}
-            text="Transacciones"
-            onClick={() => setShowTransactionHistoryModal(true)}
-          />
-          <QuickActionButton
-            icon={<FaArrowUp />}
-            text="Retirar"
-            onClick={() => {
-              /* Implementar lógica de retiro */
-            }}
-          />
-          <QuickActionButton
-            icon={<FaExchangeAlt />}
-            text="Intercambiar"
-            onClick={() => setShowExchangeModal(true)}
-          />
+        <div className="quick-actions-wrapper">
+          <div className="quick-actions-scroll">
+            <div className="quick-actions" ref={quickActionsRef}>
+              <QuickActionButton
+                icon={<FaArrowDown />}
+                text="Depositar"
+                onClick={() => {
+                  /* Implementar lógica de depósito */
+                }}
+              />
+              <QuickActionButton
+                icon={<FaArrowRight />}
+                text="Transferir"
+                onClick={() => setShowTransferModal(true)}
+              />
+              <QuickActionButton
+                icon={<FaHistory />}
+                text="Transacciones"
+                onClick={() => setShowTransactionHistoryModal(true)}
+              />
+              <QuickActionButton
+                icon={<FaArrowUp />}
+                text="Retirar"
+                onClick={() => {
+                  /* Implementar lógica de retiro */
+                }}
+              />
+              <QuickActionButton
+                icon={<FaExchangeAlt />}
+                text="Intercambiar"
+                onClick={() => setShowExchangeModal(true)}
+              />
+            </div>
+            <div className="quick-actions-dots">
+              <span
+                className={`dot ${activeDotIndex === 0 ? "active" : ""}`}
+              ></span>
+              <span
+                className={`dot ${activeDotIndex === 1 ? "active" : ""}`}
+              ></span>
+            </div>
+          </div>
         </div>
-
         {/* Assets Grid */}
         <motion.div
           initial={{ opacity: 0 }}

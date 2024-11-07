@@ -67,16 +67,51 @@ const Register = () => {
       const data = await response.json();
 
       if (response.ok) {
-        setMessage("Registro exitoso. Redirigiendo...");
-        setTimeout(() => {
+        // Guardamos el token y otros datos necesarios
+        localStorage.setItem("token", data.token);
+        localStorage.setItem("user", JSON.stringify(data.user));
+
+        setMessage("Registro exitoso");
+
+        // Realizamos el login automático
+        try {
+          const loginResponse = await fetch("http://localhost:5000/api/auth", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              email,
+              password,
+            }),
+          });
+
+          const loginData = await loginResponse.json();
+
+          if (loginResponse.ok) {
+            localStorage.setItem("token", loginData.token);
+            localStorage.setItem("user", JSON.stringify(loginData.user));
+
+            // Redirigimos después de guardar los datos
+            setTimeout(() => {
+              navigate("/home");
+            }, 1500);
+          } else {
+            // Si falla el login automático, redirigimos al login
+            setTimeout(() => {
+              navigate("/login");
+            }, 1500);
+          }
+        } catch (error) {
+          console.error("Error en login automático:", error);
           navigate("/login");
-        }, 2000);
+        }
       } else {
-        setMessage(`Error en el registro: ${data.msg}`);
+        setMessage(`Error: ${data.msg}`);
       }
     } catch (error) {
-      console.error("Error:", error);
-      setMessage("Error en el registro. Por favor, intenta de nuevo.");
+      console.error("Error en registro:", error);
+      setMessage("Error en el registro");
     } finally {
       setLoading(false);
     }
@@ -107,113 +142,117 @@ const Register = () => {
         )}
 
         <form onSubmit={onSubmit} className="auth-form">
-          <div className="form-group">
-            <div className="input-icon-wrapper">
-              <FaUserCircle className="input-icon" />
-              <input
-                className="auth-input"
-                type="text"
-                placeholder="     Nombre de usuario"
-                name="username"
-                value={username}
-                onChange={onChange}
-                required
-              />
+          <div className="form-row">
+            <div className="input-group">
+              <div className="input-icon-wrapper">
+                <FaUserCircle className="input-icon" />
+                <input
+                  className="auth-input"
+                  type="text"
+                  placeholder="Usuario"
+                  name="username"
+                  value={username}
+                  onChange={onChange}
+                  required
+                />
+              </div>
+            </div>
+
+            <div className="input-group">
+              <div className="input-icon-wrapper">
+                <FaIdCard className="input-icon" />
+                <input
+                  className="auth-input"
+                  type="text"
+                  placeholder="Nombre"
+                  name="firstName"
+                  value={firstName}
+                  onChange={onChange}
+                  required
+                />
+              </div>
             </div>
           </div>
 
-          <div className="form-group">
-            <div className="input-icon-wrapper">
-              <FaIdCard className="input-icon" />
-              <input
-                className="auth-input"
-                type="text"
-                placeholder="     Nombre"
-                name="firstName"
-                value={firstName}
-                onChange={onChange}
-                required
-              />
+          <div className="form-row">
+            <div className="input-group">
+              <div className="input-icon-wrapper">
+                <FaIdCard className="input-icon" />
+                <input
+                  className="auth-input"
+                  type="text"
+                  placeholder="Apellido"
+                  name="lastName"
+                  value={lastName}
+                  onChange={onChange}
+                  required
+                />
+              </div>
+            </div>
+
+            <div className="input-group">
+              <div className="input-icon-wrapper">
+                <FaEnvelope className="input-icon" />
+                <input
+                  className="auth-input"
+                  type="email"
+                  placeholder="Email"
+                  name="email"
+                  value={email}
+                  onChange={onChange}
+                  required
+                />
+              </div>
             </div>
           </div>
 
-          <div className="form-group">
-            <div className="input-icon-wrapper">
-              <FaIdCard className="input-icon" />
-              <input
-                className="auth-input"
-                type="text"
-                placeholder="     Apellido"
-                name="lastName"
-                value={lastName}
-                onChange={onChange}
-                required
-              />
+          <div className="form-row">
+            <div className="input-group">
+              <div className="input-icon-wrapper">
+                <FaLock className="input-icon" />
+                <input
+                  className="auth-input"
+                  type="password"
+                  placeholder="Contraseña"
+                  name="password"
+                  value={password}
+                  onChange={onChange}
+                  minLength="6"
+                  maxLength="30"
+                  required
+                />
+              </div>
+            </div>
+
+            <div className="input-group">
+              <div className="input-icon-wrapper">
+                <FaLock className="input-icon" />
+                <input
+                  className="auth-input"
+                  type="password"
+                  placeholder="Confirmar contraseña"
+                  name="confirmPassword"
+                  value={confirmPassword}
+                  onChange={onChange}
+                  minLength="6"
+                  maxLength="30"
+                  required
+                />
+              </div>
             </div>
           </div>
 
-          <div className="form-group">
-            <div className="input-icon-wrapper">
-              <FaEnvelope className="input-icon" />
-              <input
-                className="auth-input"
-                type="email"
-                placeholder="     Su correo electrónico"
-                name="email"
-                value={email}
-                onChange={onChange}
-                required
-              />
-            </div>
-          </div>
-
-          <div className="form-group">
-            <div className="input-icon-wrapper">
-              <FaLock className="input-icon" />
-              <input
-                className="auth-input"
-                type="password"
-                placeholder="     Longitud de contraseña 6 ~ 30"
-                name="password"
-                value={password}
-                onChange={onChange}
-                minLength="6"
-                maxLength="30"
-                required
-              />
-            </div>
-          </div>
-
-          <div className="form-group">
-            <div className="input-icon-wrapper">
-              <FaLock className="input-icon" />
-              <input
-                className="auth-input"
-                type="password"
-                placeholder="     Ingrese para confirmar la contraseña"
-                name="confirmPassword"
-                value={confirmPassword}
-                onChange={onChange}
-                minLength="6"
-                maxLength="30"
-                required
-              />
-            </div>
-          </div>
-
-          <div className="form-group">
-            <div className="input-icon-wrapper">
-              <FaKey className="input-icon" />
-              <input
-                className="auth-input"
-                type="text"
-                placeholder="     Ingrese el código de invitación"
-                name="invitationCode"
-                value={invitationCode}
-                onChange={onChange}
-                required
-              />
-            </div>
+          <div className="input-icon-wrapper">
+            <FaKey className="input-icon" />
+            <input
+              className="auth-input"
+              type="text"
+              placeholder="Código de invitación"
+              name="invitationCode"
+              value={invitationCode}
+              onChange={onChange}
+              required
+            />
           </div>
 
           <motion.button
@@ -230,13 +269,13 @@ const Register = () => {
         <div className="auth-footer">
           <p>
             ¿Ya tienes una cuenta?{" "}
-            <motion.a
+            <motion.span
               whileHover={{ scale: 1.05 }}
-              href="/login"
+              onClick={() => navigate("/login")}
               className="auth-link"
             >
               Iniciar sesión
-            </motion.a>
+            </motion.span>
           </p>
         </div>
       </motion.div>

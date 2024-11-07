@@ -6,230 +6,200 @@ import {
   FaKey,
   FaChartLine,
   FaMoneyBillWave,
-  FaTachometerAlt,
+  FaDesktop,
   FaBars,
   FaTimes,
-  FaBell,
-  FaUserCircle,
-  FaCog,
   FaChevronRight,
-  FaDesktop,
+  FaTachometerAlt,
 } from "react-icons/fa";
 import UserManagement from "./AdminComponents/UserManagement";
 import InvitationCodeManager from "./AdminComponents/InvitationCodeManager";
 import MarketManipulation from "./AdminComponents/MarketManipulation";
 import DepositForm from "./AdminComponents/DepositForm";
+import UserDeviceInfo from "./AdminComponents/UserDeviceInfo";
 import withAdminAuth from "./withAdminAuth.jsx";
 import "../styles/pages/AdminDashboard.css";
-import UserDeviceInfo from "./AdminComponents/UserDeviceInfo";
 
 const AdminDashboard = () => {
   const location = useLocation();
   const baseUrl = "/admin";
   const [menuOpen, setMenuOpen] = useState(false);
-  const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
 
+  // Cerrar menú al cambiar de ruta
   useEffect(() => {
-    const handleResize = () => {
-      setIsMobile(window.innerWidth <= 768);
-      if (window.innerWidth > 768) {
-        setMenuOpen(false);
-      }
-    };
-
-    window.addEventListener("resize", handleResize);
-    return () => window.removeEventListener("resize", handleResize);
-  }, []);
-
-  const toggleMenu = () => {
-    setMenuOpen(!menuOpen);
-  };
-
-  const closeMenu = () => {
-    if (isMobile) {
-      setMenuOpen(false);
-    }
-  };
+    setMenuOpen(false);
+  }, [location.pathname]);
 
   const navItems = [
     {
+      path: "dashboard",
+      icon: FaTachometerAlt,
+      text: "Dashboard",
+      description: "Panel principal",
+      gradient: "blue",
+    },
+    {
       path: "users",
       icon: FaUsers,
-      text: "Gestión de Usuarios",
-      description: "Administrar usuarios y permisos",
+      text: "Usuarios",
+      description: "Gestión de usuarios",
+      gradient: "purple",
     },
     {
       path: "invitation-codes",
       icon: FaKey,
-      text: "Códigos de Invitación",
-      description: "Generar y gestionar códigos",
+      text: "Códigos",
+      description: "Códigos de invitación",
+      gradient: "green",
     },
     {
       path: "market",
       icon: FaChartLine,
-      text: "Manipulación del Mercado",
-      description: "Control de precios y tendencias",
+      text: "Mercado",
+      description: "Control de mercado",
+      gradient: "gold",
     },
     {
       path: "deposit",
       icon: FaMoneyBillWave,
-      text: "Ingresar Dinero",
-      description: "Gestionar depósitos y retiros",
+      text: "Finanzas",
+      description: "Gestión financiera",
+      gradient: "orange",
     },
     {
       path: "device-info",
-      icon: FaDesktop, // Necesitarás importar FaDesktop de react-icons/fa
-      text: "Info. Dispositivos",
-      description: "Detalles de conexión y dispositivos",
+      icon: FaDesktop,
+      text: "Dispositivos",
+      description: "Info dispositivos",
+      gradient: "cyan",
     },
   ];
 
+  const currentItem =
+    navItems.find((item) => location.pathname.includes(item.path)) ||
+    navItems[0];
+
+  // Animaciones para los componentes
+  const pageTransition = {
+    initial: { opacity: 0, y: 20 },
+    animate: { opacity: 1, y: 0 },
+    exit: { opacity: 0, y: -20 },
+    transition: { duration: 0.3 },
+  };
+
   return (
-    <motion.div
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      className="admin-dashboard"
-    >
-      <motion.header
-        initial={{ y: -20 }}
-        animate={{ y: 0 }}
-        className="dashboard-header"
-      >
-        <motion.button
-          whileHover={{ scale: 1.05 }}
-          whileTap={{ scale: 0.95 }}
-          className="menu-toggle"
-          onClick={toggleMenu}
-        >
-          {menuOpen ? <FaTimes /> : <FaBars />}
-        </motion.button>
-        <motion.div className="header-brand" whileHover={{ scale: 1.05 }}>
-          <FaTachometerAlt />
-          <span>Panel de Administración</span>
-        </motion.div>
-        <div className="header-actions">
-          <motion.button
-            whileHover={{ scale: 1.05, y: -2 }}
-            whileTap={{ scale: 0.95 }}
-            className="header-icon"
-          >
-            <FaBell />
-            <motion.span
-              initial={{ scale: 0 }}
-              animate={{ scale: 1 }}
-              className="notification-badge"
-            >
-              3
-            </motion.span>
-          </motion.button>
-          <motion.button
-            whileHover={{ scale: 1.05, y: -2 }}
-            whileTap={{ scale: 0.95 }}
-            className="header-icon"
-          >
-            <FaCog />
-          </motion.button>
-          <motion.div
-            whileHover={{ scale: 1.05, y: -2 }}
-            whileTap={{ scale: 0.95 }}
-            className="admin-profile"
-          >
-            <FaUserCircle />
-            <span className="admin-name">Admin</span>
-          </motion.div>
-        </div>
-      </motion.header>
-
-      <div className={`dashboard-container ${menuOpen ? "menu-open" : ""}`}>
-        <AnimatePresence>
-          <motion.nav
-            initial={isMobile ? { x: -280 } : false}
-            animate={isMobile ? { x: menuOpen ? 0 : -280 } : false}
-            transition={{ type: "spring", bounce: 0, duration: 0.4 }}
-            className={`dashboard-nav ${menuOpen ? "open" : ""}`}
-          >
-            {navItems.map((item, index) => {
-              const Icon = item.icon;
-              const isActive = location.pathname === `${baseUrl}/${item.path}`;
-              return (
-                <motion.div
-                  initial={{ opacity: 0, x: -20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ delay: index * 0.1 }}
-                  key={item.path}
-                >
-                  <Link
-                    to={`${baseUrl}/${item.path}`}
-                    className={`nav-item ${isActive ? "active" : ""}`}
-                    onClick={closeMenu}
-                  >
-                    <Icon className="nav-icon" />
-                    <div className="nav-text">
-                      <span className="nav-title">{item.text}</span>
-                      <span className="nav-description">
-                        {item.description}
-                      </span>
-                    </div>
-                    <motion.div
-                      animate={{ x: isActive ? 5 : 0 }}
-                      transition={{ type: "spring", stiffness: 300 }}
-                    >
-                      <FaChevronRight size={12} />
-                    </motion.div>
-                  </Link>
-                </motion.div>
-              );
-            })}
-          </motion.nav>
-        </AnimatePresence>
-
-        <motion.main
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.2 }}
-          className="dashboard-main"
-        >
-          <div className="dashboard-content">
-            <motion.div
-              initial={{ opacity: 0, y: -20 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="content-header"
-            >
-              <h1>
-                {navItems.find((item) => location.pathname.includes(item.path))
-                  ?.text || "Dashboard"}
-              </h1>
-              <div className="breadcrumb">
-                Admin /{" "}
-                {navItems.find((item) => location.pathname.includes(item.path))
-                  ?.text || "Dashboard"}
-              </div>
-            </motion.div>
-            <AnimatePresence mode="wait">
-              <motion.div
-                key={location.pathname}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -20 }}
-                transition={{ duration: 0.2 }}
-              >
-                <Routes>
-                  <Route path="users" element={<UserManagement />} />
-                  <Route
-                    path="invitation-codes"
-                    element={<InvitationCodeManager />}
-                  />
-                  <Route path="market" element={<MarketManipulation />} />
-                  <Route path="deposit" element={<DepositForm />} />
-                  <Route path="device-info" element={<UserDeviceInfo />} />{" "}
-                  {/* Nueva ruta */}
-                </Routes>
-              </motion.div>
-            </AnimatePresence>
+    <div className="adm-dashboard">
+      {/* Header */}
+      <header className="adm-header">
+        <div className="adm-header-content">
+          <div className="adm-section-title">
+            <span className={`adm-title-icon gradient-${currentItem.gradient}`}>
+              <currentItem.icon />
+            </span>
+            <h1>{currentItem.text}</h1>
           </div>
-        </motion.main>
-      </div>
-    </motion.div>
+
+          <motion.button
+            className="adm-menu-toggle"
+            onClick={() => setMenuOpen(!menuOpen)}
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+          >
+            {menuOpen ? <FaTimes /> : <FaBars />}
+          </motion.button>
+        </div>
+      </header>
+
+      {/* Navigation Overlay */}
+      <AnimatePresence>
+        {menuOpen && (
+          <motion.div
+            className="adm-nav-overlay"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={() => setMenuOpen(false)}
+          />
+        )}
+      </AnimatePresence>
+
+      {/* Side Navigation */}
+      <AnimatePresence>
+        {menuOpen && (
+          <motion.nav
+            className="adm-nav"
+            initial={{ x: "100%" }}
+            animate={{ x: 0 }}
+            exit={{ x: "100%" }}
+            transition={{ type: "spring", bounce: 0, duration: 0.5 }}
+          >
+            <div className="adm-nav-header">
+              <h2>Panel de Control</h2>
+            </div>
+
+            <div className="adm-nav-items">
+              {navItems.map((item, index) => {
+                const isActive = location.pathname.includes(item.path);
+                return (
+                  <motion.div
+                    key={item.path}
+                    initial={{ opacity: 0, x: 50 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: index * 0.1 }}
+                  >
+                    <Link
+                      to={`${baseUrl}/${item.path}`}
+                      className={`adm-nav-item ${
+                        isActive ? "active" : ""
+                      } gradient-${item.gradient}`}
+                    >
+                      <span className="adm-nav-icon">
+                        <item.icon />
+                      </span>
+                      <div className="adm-nav-text">
+                        <span className="adm-nav-title">{item.text}</span>
+                        <span className="adm-nav-description">
+                          {item.description}
+                        </span>
+                      </div>
+                      <motion.span
+                        className="adm-nav-arrow"
+                        animate={{ x: isActive ? 5 : 0 }}
+                      >
+                        <FaChevronRight />
+                      </motion.span>
+                    </Link>
+                  </motion.div>
+                );
+              })}
+            </div>
+          </motion.nav>
+        )}
+      </AnimatePresence>
+
+      {/* Main Content */}
+      <main className={`adm-main ${menuOpen ? "blur" : ""}`}>
+        <AnimatePresence mode="wait">
+          <motion.div
+            key={location.pathname}
+            className="adm-content"
+            {...pageTransition}
+          >
+            <Routes>
+              <Route path="dashboard" element={<div>Dashboard</div>} />
+              <Route path="users" element={<UserManagement />} />
+              <Route
+                path="invitation-codes"
+                element={<InvitationCodeManager />}
+              />
+              <Route path="market" element={<MarketManipulation />} />
+              <Route path="deposit" element={<DepositForm />} />
+              <Route path="device-info" element={<UserDeviceInfo />} />
+            </Routes>
+          </motion.div>
+        </AnimatePresence>
+      </main>
+    </div>
   );
 };
 

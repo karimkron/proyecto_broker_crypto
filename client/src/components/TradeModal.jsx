@@ -184,9 +184,9 @@ const TradeModal = ({ cryptoData, tradeType, onClose }) => {
               max={userBalance}
             />
           </div>
-          <div className="form-group">
+          {/*  <div className="form-group">
             <label>Ganancia estimada: {estimatedProfit.toFixed(4)} USDT</label>
-          </div>
+          </div> */}
           <button type="submit" className="submit-trade">
             Confirmación del pedido
           </button>

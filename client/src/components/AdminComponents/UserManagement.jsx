@@ -13,8 +13,6 @@ import {
   FaCalendarAlt,
   FaIdCard,
   FaUserEdit,
-  FaEye,
-  FaEyeSlash,
   FaExclamationTriangle,
   FaUnlock,
   FaLockOpen,
@@ -65,7 +63,7 @@ const UserManagement = () => {
     dateRange: "all",
   });
 
-  // Añade esto después de la definición de estados y antes del useEffect
+  // Renderizado de estado KYC
   const renderKYCStatus = (user) => {
     if (!user) return null;
 
@@ -130,7 +128,6 @@ const UserManagement = () => {
     }
     setSortConfig({ key, direction });
   };
-
   // Efectos
   useEffect(() => {
     fetchUsers();
@@ -350,7 +347,7 @@ const UserManagement = () => {
         <motion.button
           whileHover={{ scale: 1.05 }}
           whileTap={{ scale: 0.95 }}
-          className="filter-button"
+          className="action-button secondary"
           onClick={() => setShowFilters(!showFilters)}
         >
           <FaFilter /> Filtros
@@ -358,7 +355,7 @@ const UserManagement = () => {
         <motion.button
           whileHover={{ scale: 1.05 }}
           whileTap={{ scale: 0.95 }}
-          className="view-toggle-button"
+          className="action-button primary"
           onClick={() => setTableView(!tableView)}
         >
           {tableView ? <FaThLarge /> : <FaTable />}
@@ -516,7 +513,7 @@ const UserManagement = () => {
                   <motion.button
                     whileHover={{ scale: 1.1 }}
                     whileTap={{ scale: 0.9 }}
-                    className="action-button edit"
+                    className="action-button primary"
                     onClick={(e) => {
                       e.stopPropagation();
                       handleSelectUser(user);
@@ -574,7 +571,6 @@ const UserManagement = () => {
               )}
             </div>
           </div>
-
           <div className="user-card-content">
             <h3>{user.username}</h3>
             <div className="user-info-item">
@@ -617,7 +613,7 @@ const UserManagement = () => {
             <motion.button
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
-              className="card-action-button edit"
+              className="action-button primary"
               onClick={(e) => {
                 e.stopPropagation();
                 setEditMode(true);
@@ -639,7 +635,7 @@ const UserManagement = () => {
         whileTap={{ scale: 0.95 }}
         onClick={() => setPage(page - 1)}
         disabled={page === 1}
-        className="pagination-button"
+        className="action-button secondary"
       >
         Anterior
       </motion.button>
@@ -650,7 +646,9 @@ const UserManagement = () => {
           whileHover={{ scale: 1.05 }}
           whileTap={{ scale: 0.95 }}
           onClick={() => setPage(i + 1)}
-          className={`pagination-button ${page === i + 1 ? "active" : ""}`}
+          className={`action-button ${
+            page === i + 1 ? "primary" : "secondary"
+          }`}
         >
           {i + 1}
         </motion.button>
@@ -661,7 +659,7 @@ const UserManagement = () => {
         whileTap={{ scale: 0.95 }}
         onClick={() => setPage(page + 1)}
         disabled={page === totalPages}
-        className="pagination-button"
+        className="action-button secondary"
       >
         Siguiente
       </motion.button>
@@ -758,7 +756,7 @@ const UserManagement = () => {
         <motion.button
           whileHover={{ scale: 1.05 }}
           whileTap={{ scale: 0.95 }}
-          className="save-button"
+          className="action-button success"
           onClick={handleUpdateUser}
           disabled={loading}
         >
@@ -767,7 +765,7 @@ const UserManagement = () => {
         <motion.button
           whileHover={{ scale: 1.05 }}
           whileTap={{ scale: 0.95 }}
-          className="cancel-button"
+          className="action-button secondary"
           onClick={() => setEditMode(false)}
         >
           Cancelar
@@ -837,7 +835,7 @@ const UserManagement = () => {
       <motion.button
         whileHover={{ scale: 1.05 }}
         whileTap={{ scale: 0.95 }}
-        className="edit-button"
+        className="action-button primary"
         onClick={() => setEditMode(!editMode)}
         disabled={loading}
       >
@@ -848,7 +846,7 @@ const UserManagement = () => {
       <motion.button
         whileHover={{ scale: 1.05 }}
         whileTap={{ scale: 0.95 }}
-        className="password-button"
+        className="action-button secondary"
         onClick={() => setShowPasswordForm(!showPasswordForm)}
         disabled={loading}
       >
@@ -859,8 +857,8 @@ const UserManagement = () => {
       <motion.button
         whileHover={{ scale: 1.05 }}
         whileTap={{ scale: 0.95 }}
-        className={`block-button ${
-          selectedUser.isBlocked ? "unblock" : "block"
+        className={`action-button ${
+          selectedUser.isBlocked ? "success" : "danger"
         }`}
         onClick={handleToggleBlock}
         disabled={loading}
@@ -874,7 +872,7 @@ const UserManagement = () => {
           <motion.button
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
-            className="verify-button"
+            className="action-button success"
             onClick={() => handleKYCStatus("verified")}
             disabled={loading}
           >
@@ -884,7 +882,7 @@ const UserManagement = () => {
           <motion.button
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
-            className="reject-button"
+            className="action-button danger"
             onClick={() => {
               const reason = window.prompt("Razón del rechazo:");
               if (reason) handleKYCStatus("rejected", reason);
@@ -932,7 +930,7 @@ const UserManagement = () => {
         <motion.button
           whileHover={{ scale: 1.05 }}
           whileTap={{ scale: 0.95 }}
-          className="save-button"
+          className="action-button success"
           onClick={handleChangePassword}
           disabled={loading}
         >
@@ -941,7 +939,7 @@ const UserManagement = () => {
         <motion.button
           whileHover={{ scale: 1.05 }}
           whileTap={{ scale: 0.95 }}
-          className="cancel-button"
+          className="action-button secondary"
           onClick={() => {
             setShowPasswordForm(false);
             setPasswordForm({
@@ -958,43 +956,50 @@ const UserManagement = () => {
 
   if (loading && !selectedUser) {
     return (
-      <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        className="loading-container"
-      >
-        <FaSpinner className="spinning" />
-        <p>Cargando usuarios...</p>
-      </motion.div>
+      <div className="usermanagement-page-container">
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          className="loading-container"
+        >
+          <FaSpinner className="spinning" />
+          <p>Cargando usuarios...</p>
+        </motion.div>
+      </div>
     );
   }
 
   if (error) {
     return (
-      <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        className="error-container"
-      >
-        <FaExclamationTriangle />
-        <p>{error}</p>
-        <motion.button
-          whileHover={{ scale: 1.05 }}
-          whileTap={{ scale: 0.95 }}
-          onClick={fetchUsers}
+      <div className="usermanagement-page-container">
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          className="error-container"
         >
-          Reintentar
-        </motion.button>
-      </motion.div>
+          <FaExclamationTriangle />
+          <p>{error}</p>
+          <motion.button
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            className="action-button primary"
+            onClick={fetchUsers}
+          >
+            Reintentar
+          </motion.button>
+        </motion.div>
+      </div>
     );
   }
 
   return (
-    <div className="user-management-container">
-      {renderHeader()}
-      {renderFilters()}
-      {tableView ? renderTableView() : renderCardView()}
-      {renderUserDetailsPanel()}
+    <div className="usermanagement-page-container">
+      <div className="user-management-container">
+        {renderHeader()}
+        {renderFilters()}
+        {tableView ? renderTableView() : renderCardView()}
+        {renderUserDetailsPanel()}
+      </div>
     </div>
   );
 };

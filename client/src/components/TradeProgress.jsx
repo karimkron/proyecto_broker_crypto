@@ -1,5 +1,4 @@
-import React, { useState, useEffect } from 'react';
-import './TradeProgress.css';
+import React, { useState, useEffect } from "react";
 
 const TradeProgress = ({ duration, onComplete }) => {
   const [timeLeft, setTimeLeft] = useState(parseInt(duration));
@@ -9,7 +8,7 @@ const TradeProgress = ({ duration, onComplete }) => {
     if (timeLeft > 0) {
       const timer = setInterval(() => {
         setTimeLeft((prevTime) => prevTime - 1);
-        setProgress((prevProgress) => prevProgress + (100 / parseInt(duration)));
+        setProgress((prevProgress) => prevProgress + 100 / parseInt(duration));
       }, 1000);
 
       return () => clearInterval(timer);

@@ -18,7 +18,7 @@ import {
 } from "react-icons/fa";
 import { motion, AnimatePresence } from "framer-motion";
 import axios from "axios";
-import "../styles/pages/profile.css";
+import "../styles/pages/Profile.css";
 
 const Profile = () => {
   const [user, setUser] = useState(null);

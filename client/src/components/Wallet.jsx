@@ -31,7 +31,7 @@ import TransferModal from "./modalTransferencias.jsx";
 import TransactionHistory from "./TransactionHistory";
 
 // Estilos
-import "../styles/pages/wallet.css";
+import "../styles/pages/Wallet.css";
 
 // Constantes
 const CACHE_DURATION = 120000; // 2 minutos

@@ -42,12 +42,15 @@ const TradeModal = ({ cryptoData, tradeType, onClose }) => {
       try {
         const token = localStorage.getItem("token");
         const [balanceResponse, percentagesResponse] = await Promise.all([
-          axios.get("http://localhost:5000/api/wallet", {
+          axios.get(`${import.meta.env.VITE_API_URL}/api/wallet`, {
             headers: { Authorization: `Bearer ${token}` },
           }),
-          axios.get("http://localhost:5000/api/users/profit-percentages", {
-            headers: { Authorization: `Bearer ${token}` },
-          }),
+          axios.get(
+            `${import.meta.env.VITE_API_URL}/api/users/profit-percentages`,
+            {
+              headers: { Authorization: `Bearer ${token}` },
+            }
+          ),
         ]);
         setUserBalance(balanceResponse.data.balanceUSDT);
         setProfitPercentages(percentagesResponse.data);
@@ -88,7 +91,7 @@ const TradeModal = ({ cryptoData, tradeType, onClose }) => {
       };
 
       const response = await axios.post(
-        "http://localhost:5000/api/trades/trade",
+        `${import.meta.env.VITE_API_URL}/api/trades/trade`,
         orderData,
         {
           headers: { Authorization: `Bearer ${token}` },

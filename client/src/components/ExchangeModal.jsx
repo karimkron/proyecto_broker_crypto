@@ -26,7 +26,7 @@ const ExchangeModal = ({
       try {
         const token = localStorage.getItem("token");
         const response = await axios.get(
-          "http://localhost:5000/api/exchange-rate",
+          `${import.meta.env.VITE_API_URL}/api/exchange-rate`,
           {
             headers: { Authorization: `Bearer ${token}` },
           }
@@ -113,7 +113,7 @@ const ExchangeModal = ({
       console.log("Sending exchange request:", exchangeData);
 
       const response = await axios.post(
-        "http://localhost:5000/api/wallet/exchange",
+        `${import.meta.env.VITE_API_URL}/api/wallet/exchange`,
         exchangeData,
         {
           headers: {

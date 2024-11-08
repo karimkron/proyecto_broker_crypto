@@ -35,7 +35,7 @@ const DepositForm = () => {
       try {
         const token = localStorage.getItem("token");
         const response = await axios.get(
-          "http://localhost:5000/api/admin/users",
+          `${import.meta.env.VITE_API_URL}/api/admin/users`,
           {
             headers: { Authorization: `Bearer ${token}` },
           }
@@ -57,7 +57,7 @@ const DepositForm = () => {
     try {
       const token = localStorage.getItem("token");
       const response = await axios.post(
-        `http://localhost:5000/api/admin/${action}`,
+        `${import.meta.env.VITE_API_URL}/api/admin/${action}`,
         {
           userId: selectedUser,
           amountEUR: parseFloat(amount), // Cambiado a amountEUR
@@ -108,7 +108,7 @@ const DepositForm = () => {
     try {
       const token = localStorage.getItem("token");
       const response = await axios.get(
-        `http://localhost:5000/api/admin/transactions/${userId}`,
+        `${import.meta.env.VITE_API_URL}/api/admin/transactions/${userId}`,
         {
           headers: { Authorization: `Bearer ${token}` },
         }

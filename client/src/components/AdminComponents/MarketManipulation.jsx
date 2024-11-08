@@ -27,7 +27,7 @@ const MarketManipulation = () => {
     try {
       const token = localStorage.getItem("token");
       const response = await axios.get(
-        "http://localhost:5000/api/admin/users", // Cambiado para usar la ruta existente
+        `${import.meta.env.VITE_API_URL}/api/admin/users`,
         {
           headers: { Authorization: `Bearer ${token}` },
         }
@@ -48,9 +48,12 @@ const MarketManipulation = () => {
       let response;
 
       if (!searchQuery.trim() || searchType === "all") {
-        response = await axios.get("http://localhost:5000/api/admin/users", {
-          headers: { Authorization: `Bearer ${token}` },
-        });
+        response = await axios.get(
+          `${import.meta.env.VITE_API_URL}/api/admin/users`,
+          {
+            headers: { Authorization: `Bearer ${token}` },
+          }
+        );
         setFilteredUsers(response.data.filter((user) => user.role !== "admin"));
         return;
       }
@@ -64,13 +67,17 @@ const MarketManipulation = () => {
           break;
         case "name":
           response = await axios.get(
-            `http://localhost:5000/api/admin/market-manipulation/users/search/name/${searchQuery}`,
+            `${
+              import.meta.env.VITE_API_URL
+            }/api/admin/market-manipulation/users/search/email/${searchQuery}`,
             { headers: { Authorization: `Bearer ${token}` } }
           );
           break;
         case "date":
           response = await axios.get(
-            `http://localhost:5000/api/admin/market-manipulation/users/search/date/${searchQuery}`,
+            `${
+              import.meta.env.VITE_API_URL
+            }/api/admin/market-manipulation/users/search/name/${searchQuery}`,
             { headers: { Authorization: `Bearer ${token}` } }
           );
           break;
@@ -89,7 +96,9 @@ const MarketManipulation = () => {
     try {
       const token = localStorage.getItem("token");
       await axios.patch(
-        `http://localhost:5000/api/admin/market-manipulation/toggle-profits/${userId}`,
+        `${
+          import.meta.env.VITE_API_URL
+        }/api/admin/market-manipulation/users/search/date/${userId}`,
         { allowProfits: !currentStatus },
         { headers: { Authorization: `Bearer ${token}` } }
       );

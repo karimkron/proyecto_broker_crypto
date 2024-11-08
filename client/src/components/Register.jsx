@@ -49,20 +49,23 @@ const Register = () => {
     }
 
     try {
-      const response = await fetch("http://localhost:5000/api/users", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          username,
-          firstName,
-          lastName,
-          email,
-          password,
-          invitationCode,
-        }),
-      });
+      const response = await fetch(
+        `${import.meta.env.VITE_API_URL}/api/users`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            username,
+            firstName,
+            lastName,
+            email,
+            password,
+            invitationCode,
+          }),
+        }
+      );
 
       const data = await response.json();
 
@@ -75,16 +78,19 @@ const Register = () => {
 
         // Realizamos el login automático
         try {
-          const loginResponse = await fetch("http://localhost:5000/api/auth", {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify({
-              email,
-              password,
-            }),
-          });
+          const loginResponse = await fetch(
+            `${import.meta.env.VITE_API_URL}/api/auth`,
+            {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify({
+                email,
+                password,
+              }),
+            }
+          );
 
           const loginData = await loginResponse.json();
 

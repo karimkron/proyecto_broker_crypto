@@ -9,15 +9,15 @@ class TradingEngine {
       priceRange: { min: 2200, max: 2800 },
     },
     eth: {
-      symbol: "bnb",
+      symbol: "doge",
       priceRange: { min: 280, max: 320 },
     },
     bnb: {
-      symbol: "sol",
+      symbol: "ada",
       priceRange: { min: 90, max: 110 },
     },
     sol: {
-      symbol: "ada",
+      symbol: "link",
       priceRange: { min: 0.4, max: 0.6 },
     },
     ada: {

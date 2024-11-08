@@ -315,6 +315,24 @@ const CryptoDetail = () => {
         </div>
 
         <div className="trade-section">
+          <div className="trade-buttons">
+            <motion.button
+              className="buy-button"
+              onClick={() => handleTrade("buy")}
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+            >
+              Comprar
+            </motion.button>
+            <motion.button
+              className="sell-button"
+              onClick={() => handleTrade("sell")}
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+            >
+              Vender
+            </motion.button>
+          </div>
           <div className="simulated-orders">
             <div className="title-orders">
               <p>Tiempo</p>
@@ -344,25 +362,6 @@ const CryptoDetail = () => {
                 </motion.div>
               ))}
             </div>
-          </div>
-
-          <div className="trade-buttons">
-            <motion.button
-              className="buy-button"
-              onClick={() => handleTrade("buy")}
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
-            >
-              Comprar
-            </motion.button>
-            <motion.button
-              className="sell-button"
-              onClick={() => handleTrade("sell")}
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
-            >
-              Vender
-            </motion.button>
           </div>
         </div>
       </div>

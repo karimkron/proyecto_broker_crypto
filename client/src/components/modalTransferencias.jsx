@@ -34,7 +34,7 @@ const TransferModal = ({
       try {
         const token = localStorage.getItem("token");
         const response = await axios.get(
-          "http://localhost:5000/api/wallet/address",
+          `${import.meta.env.VITE_API_URL}/api/wallet/address`,
           {
             headers: { Authorization: `Bearer ${token}` },
           }
@@ -114,7 +114,7 @@ const TransferModal = ({
 
       // Realizar la transferencia
       const response = await axios.post(
-        "http://localhost:5000/api/wallet/transfer",
+        `${import.meta.env.VITE_API_URL}/api/wallet/transfer`,
         {
           recipientAddress,
           amount: parseFloat(amount),
@@ -127,7 +127,7 @@ const TransferModal = ({
 
       // Obtener balance actualizado
       const balanceResponse = await axios.get(
-        "http://localhost:5000/api/wallet",
+        `${import.meta.env.VITE_API_URL}/api/wallet`,
         {
           headers: { Authorization: `Bearer ${token}` },
         }

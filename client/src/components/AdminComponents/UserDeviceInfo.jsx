@@ -39,7 +39,7 @@ const UserDeviceInfo = () => {
 
       const token = localStorage.getItem("token");
       await axios.post(
-        "http://localhost:5000/api/admin/update-location",
+        `${import.meta.env.VITE_API_URL}/api/admin/update-location`,
         {
           latitude: position.coords.latitude,
           longitude: position.coords.longitude,
@@ -73,7 +73,7 @@ const UserDeviceInfo = () => {
     try {
       const token = localStorage.getItem("token");
       const response = await axios.get(
-        "http://localhost:5000/api/admin/users-device-info",
+        `${import.meta.env.VITE_API_URL}/api/admin/users-device-info`,
         {
           headers: { Authorization: `Bearer ${token}` },
         }

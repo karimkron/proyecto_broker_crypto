@@ -115,9 +115,11 @@ const CryptoDetail = () => {
         }
 
         const [detailResponse, historyResponse] = await Promise.all([
-          axiosInstance.get(`http://localhost:5000/api/crypto/${id}`),
+          axiosInstance.get(`${import.meta.env.VITE_API_URL}/api/crypto/${id}`),
           axiosInstance.get(
-            `http://localhost:5000/api/crypto/${id}/history?days=${selectedTimeRange.days}`
+            `${import.meta.env.VITE_API_URL}/api/crypto/${id}/history?days=${
+              selectedTimeRange.days
+            }`
           ),
         ]);
 

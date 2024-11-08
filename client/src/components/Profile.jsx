@@ -70,10 +70,10 @@ const Profile = () => {
       const token = localStorage.getItem("token");
 
       const [userResponse, kycResponse] = await Promise.all([
-        axios.get("http://localhost:5000/api/users/me", {
+        axios.get(`${import.meta.env.VITE_API_URL}/api/users/me`, {
           headers: { Authorization: `Bearer ${token}` },
         }),
-        axios.get("http://localhost:5000/api/kyc/status", {
+        axios.get(`${import.meta.env.VITE_API_URL}/api/kyc/status`, {
           headers: { Authorization: `Bearer ${token}` },
         }),
       ]);
@@ -163,7 +163,7 @@ const Profile = () => {
       });
 
       const token = localStorage.getItem("token");
-      await axios.post("http://localhost:5000/api/kyc", formData, {
+      await axios.post(`${import.meta.env.VITE_API_URL}/api/kyc`, formData, {
         headers: {
           Authorization: `Bearer ${token}`,
           "Content-Type": "multipart/form-data",
@@ -218,7 +218,7 @@ const Profile = () => {
       const token = localStorage.getItem("token");
 
       await axios.put(
-        "http://localhost:5000/api/users/change-password",
+        `${import.meta.env.VITE_API_URL}/api/users/change-password`,
         {
           currentPassword: passwordForm.currentPassword,
           newPassword: passwordForm.newPassword,

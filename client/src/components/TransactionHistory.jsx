@@ -14,7 +14,7 @@ const TransactionHistory = ({ isOpen, onClose }) => {
       try {
         const token = localStorage.getItem("token");
         const response = await axios.get(
-          "http://localhost:5000/api/wallet/transactions",
+          `${import.meta.env.VITE_API_URL}/api/wallet/transactions`,
           {
             headers: { Authorization: `Bearer ${token}` },
           }

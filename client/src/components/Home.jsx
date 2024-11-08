@@ -101,7 +101,7 @@ const Home = () => {
       return;
     }
 
-    const socket = io("http://localhost:5000", { auth: { token } });
+    const socket = io(`${import.meta.env.VITE_API_URL}`, { auth: { token } });
     let priceInterval;
     let dataInterval;
 

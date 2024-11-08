@@ -24,7 +24,7 @@ const InvitationCodeManager = () => {
   const fetchCodes = async () => {
     try {
       const response = await fetch(
-        "http://localhost:5000/api/invitation-codes",
+        `${import.meta.env.VITE_API_URL}/api/invitation-codes`,
         {
           headers: {
             Authorization: `Bearer ${localStorage.getItem("token")}`,
@@ -48,7 +48,7 @@ const InvitationCodeManager = () => {
     try {
       setGeneratingCode(true);
       const response = await fetch(
-        "http://localhost:5000/api/invitation-codes/generate",
+        `${import.meta.env.VITE_API_URL}/api/invitation-codes/generate`,
         {
           method: "POST",
           headers: {

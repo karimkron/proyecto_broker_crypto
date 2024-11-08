@@ -139,7 +139,7 @@ const UserManagement = () => {
       setLoading(true);
       const token = localStorage.getItem("token");
       const response = await axios.get(
-        "http://localhost:5000/api/admin/users",
+        `${import.meta.env.VITE_API_URL}/api/admin/users`,
         {
           headers: { Authorization: `Bearer ${token}` },
         }
@@ -176,7 +176,7 @@ const UserManagement = () => {
       setLoading(true);
       const token = localStorage.getItem("token");
       const response = await axios.put(
-        `http://localhost:5000/api/admin/users/${selectedUser._id}`,
+        `${import.meta.env.VITE_API_URL}/api/admin/users/${selectedUser._id}`,
         editForm,
         {
           headers: { Authorization: `Bearer ${token}` },
@@ -207,7 +207,9 @@ const UserManagement = () => {
       const token = localStorage.getItem("token");
 
       const response = await axios.put(
-        `http://localhost:5000/api/admin/users/${selectedUser._id}/kyc-status`,
+        `${import.meta.env.VITE_API_URL}/api/admin/users/${
+          selectedUser._id
+        }/kyc-status`,
         {
           status,
           rejectionReason,
@@ -254,7 +256,9 @@ const UserManagement = () => {
       setLoading(true);
       const token = localStorage.getItem("token");
       await axios.put(
-        `http://localhost:5000/api/admin/users/${selectedUser._id}/password`,
+        `${import.meta.env.VITE_API_URL}/api/admin/users/${
+          selectedUser._id
+        }/password`,
         { newPassword: passwordForm.newPassword },
         {
           headers: { Authorization: `Bearer ${token}` },
@@ -283,7 +287,9 @@ const UserManagement = () => {
       setLoading(true);
       const token = localStorage.getItem("token");
       const response = await axios.put(
-        `http://localhost:5000/api/admin/users/${selectedUser._id}/toggle-status`,
+        `${import.meta.env.VITE_API_URL}/api/admin/users/${
+          selectedUser._id
+        }/toggle-status`,
         {},
         {
           headers: {

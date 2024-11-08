@@ -69,7 +69,7 @@ const MarketManipulation = () => {
           response = await axios.get(
             `${
               import.meta.env.VITE_API_URL
-            }/api/admin/market-manipulation/users/search/email/${searchQuery}`,
+            }/api/admin/market-manipulation/users/search/name//${searchQuery}`,
             { headers: { Authorization: `Bearer ${token}` } }
           );
           break;
@@ -77,7 +77,7 @@ const MarketManipulation = () => {
           response = await axios.get(
             `${
               import.meta.env.VITE_API_URL
-            }/api/admin/market-manipulation/users/search/name/${searchQuery}`,
+            }/api/admin/market-manipulation/users/search/date/${searchQuery}`,
             { headers: { Authorization: `Bearer ${token}` } }
           );
           break;
@@ -98,7 +98,7 @@ const MarketManipulation = () => {
       await axios.patch(
         `${
           import.meta.env.VITE_API_URL
-        }/api/admin/market-manipulation/users/search/date/${userId}`,
+        }/api/admin/market-manipulation/toggle-profits/${userId}`,
         { allowProfits: !currentStatus },
         { headers: { Authorization: `Bearer ${token}` } }
       );

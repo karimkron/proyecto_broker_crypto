@@ -13,7 +13,7 @@ import {
   FaArrowDown as FaDeposit,
 } from "react-icons/fa";
 
-import "../styles/pages/market.css";
+import "../styles/pages/Market.css";
 
 // Datos de respaldo
 const fallbackData = [

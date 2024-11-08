@@ -189,6 +189,7 @@
   .exchange-modal {
     width: 95%;
     padding: 1.5rem;
+    padding-bottom: 70px;
   }
 
   .modal-header h2 {

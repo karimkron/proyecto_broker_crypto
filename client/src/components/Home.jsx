@@ -171,7 +171,9 @@ const Home = () => {
     >
       <div className="home-market-card-header">
         <CryptoIcon symbol={crypto.symbol} />
-        <span className="home-crypto-name">{crypto.name}</span>
+        <span className="home-crypto-name" translate="no">
+          {crypto.name}
+        </span>
       </div>
       <div className="home-market-card-body">
         <div className="home-crypto-price">

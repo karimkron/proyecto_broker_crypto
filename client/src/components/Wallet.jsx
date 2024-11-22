@@ -279,7 +279,7 @@ const Wallet = () => {
         >
           <div className="balance-card-content">
             <div className="balance-info">
-              <h2>Balance Total</h2>
+              <h2>Balance</h2>
               <motion.div
                 className="total-amount"
                 initial={{ scale: 0.5, opacity: 0 }}

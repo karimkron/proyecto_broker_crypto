@@ -379,6 +379,10 @@
     font-size: 1.25rem;
   }
 
+  .adm-nav-item {
+    padding: 0.4rem;
+  }
+
   .adm-title-icon {
     width: 36px;
     height: 36px;

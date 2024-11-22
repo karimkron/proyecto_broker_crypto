@@ -95,7 +95,9 @@ const TopCryptoItem = memo(({ crypto, priceVariation }) => {
       transition={{ duration: 0.3 }}
       layout
     >
-      <div className="crypto-symbol">{crypto.symbol.toUpperCase()}/USDT</div>
+      <div className="crypto-symbol" translate="no">
+        {crypto.symbol.toUpperCase()}/USDT
+      </div>
       <PriceDisplay price={priceVariation || crypto.current_price} />
       <PercentageChange percentage={crypto.price_change_percentage_24h} />
     </motion.div>
